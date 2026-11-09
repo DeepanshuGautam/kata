@@ -1,0 +1,14 @@
+{
+  "name": "kata-dojo",
+  "description": "Kata: practised command sequences for Claude Code.",
+  "owner": { "name": "Deepanshu Gautam", "url": "https://github.com/DeepanshuGautam" },
+  "plugins": [
+    {
+      "name": "kata",
+      "source": "./",
+      "description": "Define commands, chain them into modes, run them from the terminal, watch the run live.",
+      "category": "productivity",
+      "tags": ["workflow", "pull-request", "modes", "mods"]
+    }
+  ]
+}

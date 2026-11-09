@@ -1,0 +1,6 @@
+{
+  "title": "Implement the scope",
+  "gate": "continue",
+  "instruction": "Implement only what the scope statement lists, following the architecture rules in CLAUDE.md and the plan's file layout. Add or update tests alongside the code. Do not add a dependency, change a public contract, or touch files outside the scope without asking the user in plain text first. Do not commit in this step.",
+  "updatedAt": "2026-11-09T00:00:00Z"
+}

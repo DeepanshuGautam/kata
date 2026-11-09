@@ -1,0 +1,336 @@
+<title>Kata Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a two-column workbench. Library (modes, commands) on the left, the selected item's editor on the right; stacks on phones. */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --fg:#151b21; --muted:#5f6a74; --line:#d6dde3; --soft:#e9edf1;
+  --accent:#1f6f8b; --accent-ink:#ffffff; --running:#b4531f; --ok:#2e7d4f; --warn:#9a6700; --danger:#a63d40;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --radius:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1418; --surface:#161c22; --fg:#e4e9ee; --muted:#8c97a2; --line:#28323c; --soft:#1d252d;
+  --accent:#5fb6d1; --accent-ink:#0f1418; --running:#e08a5a; --ok:#6cc08f; --warn:#d6a73a; --danger:#e07a7d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1418; --surface:#161c22; --fg:#e4e9ee; --muted:#8c97a2; --line:#28323c; --soft:#1d252d;
+  --accent:#5fb6d1; --accent-ink:#0f1418; --running:#e08a5a; --ok:#6cc08f; --warn:#d6a73a; --danger:#e07a7d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.45;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 32px}
+h1,h2,h3{text-wrap:balance;margin:0}
+button{font:inherit;color:inherit;background:none;border:1px solid var(--line);border-radius:var(--radius);padding:6px 11px;cursor:pointer}
+button:hover{background:var(--soft)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.danger{color:var(--danger)}
+button.plain{border-color:transparent;padding:4px 8px}
+button:disabled{opacity:.45;cursor:default}
+input,textarea,select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px;width:100%}
+textarea{min-height:120px;resize:vertical;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-block:28px 18px;border-bottom:1px solid var(--line)}
+header.top h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
+header.top p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:13px;color:var(--muted)}
+.status.err{color:var(--danger)}
+.work{display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:24px;padding-top:20px}
+@media (max-width:760px){.work{grid-template-columns:1fr}}
+nav.library{display:flex;flex-direction:column;gap:20px;min-width:0}
+.group h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.group h2 button{font-size:12px;text-transform:none;letter-spacing:0}
+.items{display:flex;flex-direction:column;gap:4px}
+.item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border-color:transparent;min-width:0}
+.item .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .count{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.item.active{background:var(--surface);border-color:var(--line)}
+.item .id{color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:6px 10px}
+.editor{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;min-width:0}
+.editor header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.editor h2{font-size:20px;font-weight:600}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-size:13px;color:var(--muted);font-weight:500}
+.field .hint{font-size:12px;color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.row{grid-template-columns:1fr}}
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.continue{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+.pill.confirm{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+.pill.stop-on-fail{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:step}
+ol.steps li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg)}
+ol.steps li::before{counter-increment:step;content:counter(step);font-family:var(--mono);font-size:13px;color:var(--muted);padding-top:3px}
+ol.steps .title{font-weight:600}
+ol.steps .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+ol.steps .excerpt{font-size:13px;color:var(--muted);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ol.steps .controls{display:flex;gap:4px}
+ol.steps .controls button{padding:3px 7px;font-size:13px}
+.addstep{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.addstep select{flex:1;min-width:180px;width:auto}
+.readonly-note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding:6px 10px;margin-bottom:14px}
+.instruction{white-space:pre-wrap;line-height:1.55;font-size:14.5px;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;background:var(--bg);max-width:72ch}
+details.export{margin-top:24px;border-top:1px solid var(--line);padding-top:14px}
+details.export summary{cursor:pointer;color:var(--muted);font-size:14px}
+details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;max-height:360px;margin:10px 0}
+.usage{font-size:13px;color:var(--muted);margin-top:18px;max-width:70ch}
+.usage code{background:var(--soft);padding:1px 5px;border-radius:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.danger-zone{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:var(--radius);font-size:13px;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<header class="top">
+  <div>
+    <div class="eyebrow">Kata · Claude Code plugin</div>
+    <h1>Kata Library</h1>
+    <p>Commands are single instructions Claude follows. Modes are ordered sequences of commands. The <code>/kata</code> skill reads this library at run time.</p>
+  </div>
+  <div class="toolbar">
+    <span id="status" class="status">Connecting…</span>
+    <button id="btn-export" class="plain">Export JSON</button>
+  </div>
+</header>
+
+<div class="work">
+  <nav class="library" aria-label="Library">
+    <section class="group">
+      <h2>Modes <button id="btn-new-mode" hidden>+ New</button></h2>
+      <div id="modes" class="items"><div class="empty">No modes yet.</div></div>
+    </section>
+    <section class="group">
+      <h2>Commands <button id="btn-new-cmd" hidden>+ New</button></h2>
+      <div id="commands" class="items"><div class="empty">No commands yet.</div></div>
+    </section>
+    <p class="usage">Run a whole mode with <code>/kata pr &lt;scope&gt;</code>, one command with <code>/kata run review</code>, list with <code>/kata modes</code>. Pull changes into a terminal that cannot reach this page with <code>/kata-sync</code>.</p>
+  </nav>
+
+  <main id="editor" class="editor" aria-live="polite">
+    <header><div><div class="eyebrow">Nothing selected</div><h2>Pick a mode or a command</h2></div></header>
+    <p class="status">The library loads from the shared store. If it stays empty, Claude seeds the default <em>PR implementation</em> mode after the first publish.</p>
+  </main>
+</div>
+
+<details class="export" id="export" hidden>
+  <summary>Library as JSON (the format <code>/kata-sync</code> caches locally)</summary>
+  <div class="actions"><button id="btn-copy">Copy JSON</button></div>
+  <pre id="export-json"></pre>
+</details>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const GATES = ['continue', 'confirm', 'stop-on-fail'];
+  const GATE_HELP = {
+    'continue': 'Go straight to the next command.',
+    'confirm': 'Pause after this command and wait for the user before the next one.',
+    'stop-on-fail': 'If this command reports a failure, end the run and report.'
+  };
+  const state = { db: null, canEdit: false, modes: new Map(), commands: new Map(), sel: null, editing: false, draft: null, loaded: { modes: false, commands: false } };
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const slug = (s) => String(s).toLowerCase().trim().replace(/[^a-z0-9._~-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  const stepId = (s) => typeof s === 'string' ? s : (s && s.command) || '';
+  const now = () => new Date().toISOString();
+
+  let toastTimer;
+  const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200); };
+  const setStatus = (msg, err) => { const s = $('status'); s.textContent = msg; s.classList.toggle('err', !!err); };
+
+  // ----- selection & hash -----
+  const select = (kind, id) => {
+    state.sel = id ? { kind, id } : null; state.editing = false; state.draft = null;
+    try { history.replaceState(null, '', id ? `#${kind === 'mode' ? 'mode' : 'cmd'}.${id}` : location.pathname); } catch (_) {}
+    render();
+  };
+  const readHash = () => {
+    const m = /^#(mode|cmd)\.([A-Za-z0-9._~-]+)$/.exec(location.hash || '');
+    if (m) state.sel = { kind: m[1] === 'mode' ? 'mode' : 'command', id: m[2] };
+  };
+
+  // ----- rendering -----
+  function render() {
+    renderList('modes', state.modes, 'mode');
+    renderList('commands', state.commands, 'command');
+    renderEditor();
+    renderExport();
+    $('btn-new-mode').hidden = !state.canEdit; $('btn-new-cmd').hidden = !state.canEdit;
+  }
+  function renderList(elId, map, kind) {
+    const el = $(elId);
+    const ids = [...map.keys()].sort();
+    if (!ids.length) { el.innerHTML = `<div class="empty">${state.loaded[elId] ? 'None yet.' : 'Loading…'}</div>`; return; }
+    el.innerHTML = ids.map(id => {
+      const d = map.get(id); const active = state.sel && state.sel.kind === kind && state.sel.id === id;
+      const count = kind === 'mode' ? `${(d.steps || []).length} steps` : (d.gate || 'continue');
+      const label = kind === 'mode' ? esc(d.name || id) : esc(d.title || id);
+      return `<button class="item${active ? ' active' : ''}" data-kind="${kind}" data-id="${esc(id)}"><span class="name">${label} <span class="id mono">${esc(id)}</span></span><span class="count">${esc(count)}</span></button>`;
+    }).join('');
+  }
+  function renderEditor() {
+    const ed = $('editor');
+    if (!state.sel) {
+      ed.innerHTML = `<header><div><div class="eyebrow">Nothing selected</div><h2>Pick a mode or a command</h2></div></header>
+        <p class="status">${state.modes.size || state.commands.size ? 'Select an item on the left to read or edit it.' : 'The library is empty. Claude seeds the default <em>PR implementation</em> mode after the first publish, or add a command with “+ New”.'}</p>`;
+      return;
+    }
+    const map = state.sel.kind === 'mode' ? state.modes : state.commands;
+    const doc = map.get(state.sel.id);
+    if (!doc) { ed.innerHTML = `<header><div><div class="eyebrow">${state.sel.kind}</div><h2>${esc(state.sel.id)}</h2></div></header><p class="status">This item no longer exists.</p>`; return; }
+    state.sel.kind === 'mode' ? renderMode(ed, state.sel.id, doc) : renderCommand(ed, state.sel.id, doc);
+  }
+  const editBar = (kind) => state.canEdit
+    ? (state.editing
+      ? `<div class="actions"><button class="primary" data-act="save">Save</button><button data-act="cancel">Cancel</button></div>`
+      : `<div class="actions"><button data-act="edit">Edit</button></div>`)
+    : `<div class="readonly-note">You can read this ${kind}. Editing needs edit access to the artifact.</div>`;
+
+  function renderMode(ed, id, doc) {
+    const d = state.editing ? state.draft : doc;
+    const steps = (d.steps || []).map(stepId);
+    const stepRows = steps.map((cid, i) => {
+      const c = state.commands.get(cid);
+      const title = c ? esc(c.title || cid) : `<span style="color:var(--danger)">missing command</span>`;
+      const gate = c ? (c.gate || 'continue') : '';
+      const controls = state.editing ? `<div class="controls"><button data-step="${i}" data-move="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button data-step="${i}" data-move="1" ${i === steps.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button data-step="${i}" data-remove="1" aria-label="Remove">×</button></div>` : '';
+      return `<li><div><div class="title">${title}</div><div class="meta"><span class="mono">${esc(cid)}</span>${gate ? `<span class="pill ${esc(gate)}">${esc(gate)}</span>` : ''}</div>${c && !state.editing ? `<div class="excerpt">${esc(c.instruction || '')}</div>` : ''}</div>${controls}</li>`;
+    }).join('');
+    const addable = [...state.commands.keys()].sort();
+    ed.innerHTML = `
+      <header><div><div class="eyebrow">Mode · <span class="mono">${esc(id)}</span></div><h2>${state.editing ? '' : esc(d.name || id)}</h2></div>${editBar('mode')}</header>
+      ${state.editing ? `
+        <div class="row">
+          <div class="field"><label for="f-name">Name</label><input id="f-name" value="${esc(d.name || '')}"></div>
+          <div class="field"><label for="f-args">Argument hint</label><input id="f-args" value="${esc(d.argsHint || '')}" placeholder="&lt;release&gt; &lt;PR scope&gt;"></div>
+        </div>
+        <div class="field"><label for="f-desc">Description</label><input id="f-desc" value="${esc(d.description || '')}"></div>` : `
+        <p style="margin:0 0 14px;color:var(--muted)">${esc(d.description || '')}</p>
+        ${d.argsHint ? `<p class="status" style="margin:0 0 14px">Usage: <code>/kata ${esc(id)} ${esc(d.argsHint)}</code></p>` : ''}`}
+      <div class="eyebrow" style="margin-bottom:8px">Sequence</div>
+      <ol class="steps">${stepRows || '<li style="grid-template-columns:1fr"><span class="status">No commands in this mode yet.</span></li>'}</ol>
+      ${state.editing ? `<div class="addstep"><select id="f-add">${addable.map(c => `<option value="${esc(c)}">${esc(state.commands.get(c).title || c)} (${esc(c)})</option>`).join('')}</select><button data-act="addstep" ${addable.length ? '' : 'disabled'}>Add command</button></div>
+        <div class="danger-zone"><button class="danger" data-act="delete">Delete mode</button></div>` : ''}`;
+  }
+  function renderCommand(ed, id, doc) {
+    const d = state.editing ? state.draft : doc;
+    const usedBy = [...state.modes.entries()].filter(([, m]) => (m.steps || []).map(stepId).includes(id)).map(([mid]) => mid);
+    ed.innerHTML = `
+      <header><div><div class="eyebrow">Command · <span class="mono">${esc(id)}</span></div><h2>${state.editing ? '' : esc(d.title || id)}</h2></div>${editBar('command')}</header>
+      ${state.editing ? `
+        <div class="row">
+          <div class="field"><label for="f-title">Title</label><input id="f-title" value="${esc(d.title || '')}"></div>
+          <div class="field"><label for="f-gate">Gate</label><select id="f-gate">${GATES.map(g => `<option value="${g}" ${(d.gate || 'continue') === g ? 'selected' : ''}>${g}</option>`).join('')}</select><span class="hint" id="gate-help">${esc(GATE_HELP[d.gate || 'continue'])}</span></div>
+        </div>
+        <div class="field"><label for="f-instr">Instruction (what Claude does when this command runs)</label><textarea id="f-instr" rows="10">${esc(d.instruction || '')}</textarea></div>
+        <div class="danger-zone"><button class="danger" data-act="delete" ${usedBy.length ? 'disabled title="Remove it from its modes first"' : ''}>Delete command</button></div>` : `
+        <p style="margin:0 0 12px"><span class="pill ${esc(d.gate || 'continue')}">${esc(d.gate || 'continue')}</span> <span class="status">${esc(GATE_HELP[d.gate || 'continue'] || '')}</span></p>
+        <div class="instruction">${esc(d.instruction || '')}</div>
+        <p class="status" style="margin-top:14px">${usedBy.length ? `Used by: ${usedBy.map(m => `<code>${esc(m)}</code>`).join(', ')}` : 'Not part of any mode. Run it alone with <code>/kata run ' + esc(id) + '</code>.'}</p>`}`;
+  }
+  function libraryJSON() {
+    const out = { version: 1, exportedAt: now(), commands: {}, modes: {} };
+    for (const [id, c] of [...state.commands.entries()].sort()) out.commands[id] = { title: c.title || '', gate: c.gate || 'continue', instruction: c.instruction || '' };
+    for (const [id, m] of [...state.modes.entries()].sort()) out.modes[id] = { name: m.name || '', description: m.description || '', argsHint: m.argsHint || '', steps: (m.steps || []).map(stepId) };
+    return JSON.stringify(out, null, 2);
+  }
+  function renderExport() { const ex = $('export'); ex.hidden = false; if (ex.open) $('export-json').textContent = libraryJSON(); }
+
+  // ----- editing -----
+  function startEdit() { const map = state.sel.kind === 'mode' ? state.modes : state.commands; state.draft = JSON.parse(JSON.stringify(map.get(state.sel.id))); if (state.sel.kind === 'mode') state.draft.steps = (state.draft.steps || []).map(stepId); state.editing = true; render(); }
+  function syncDraftFromForm() {
+    if (!state.editing) return;
+    if (state.sel.kind === 'mode') { state.draft.name = $('f-name').value; state.draft.argsHint = $('f-args').value; state.draft.description = $('f-desc').value; }
+    else { state.draft.title = $('f-title').value; state.draft.gate = $('f-gate').value; state.draft.instruction = $('f-instr').value; }
+  }
+  async function save() {
+    syncDraftFromForm();
+    const d = state.draft; d.updatedAt = now();
+    if (state.sel.kind === 'mode' && !d.name.trim()) return toast('A mode needs a name.');
+    if (state.sel.kind === 'command' && !d.title.trim()) return toast('A command needs a title.');
+    if (state.sel.kind === 'command' && !d.instruction.trim()) return toast('A command needs an instruction.');
+    const path = `${state.sel.kind === 'mode' ? 'modes' : 'commands'}/${state.sel.id}`;
+    try { await state.db.doc(path).set(d); state.editing = false; state.draft = null; toast('Saved'); }
+    catch (e) { toast(e && e.code === 'invalid_argument' ? 'Not allowed to write here.' : 'Save failed. Try again.'); }
+    render();
+  }
+  async function remove() {
+    const path = `${state.sel.kind === 'mode' ? 'modes' : 'commands'}/${state.sel.id}`;
+    if (!confirmInline(`Delete ${state.sel.kind} “${state.sel.id}”?`)) return;
+    try { await state.db.doc(path).delete(); toast('Deleted'); select(state.sel.kind, null); } catch (_) { toast('Delete failed.'); }
+  }
+  // The viewer shows no confirm() dialogs; a second click within 4 s confirms.
+  let pendingDelete = 0;
+  function confirmInline(msg) { const t = Date.now(); if (t - pendingDelete < 4000) { pendingDelete = 0; return true; } pendingDelete = t; toast(msg + ' Click again to confirm.'); return false; }
+
+  function newItem(kind) {
+    const label = kind === 'mode' ? 'mode' : 'command';
+    const ed = $('editor');
+    ed.innerHTML = `<header><div><div class="eyebrow">New ${label}</div><h2>Create a ${label}</h2></div></header>
+      <div class="field"><label for="n-id">Identifier (lowercase, used in <code>/kata</code>)</label><input id="n-id" placeholder="${kind === 'mode' ? 'hotfix' : 'write-tests'}"></div>
+      <div class="actions"><button class="primary" data-act="create" data-kind="${kind}">Create</button><button data-act="cancel-new">Cancel</button></div>`;
+    $('n-id').focus();
+  }
+  async function create(kind) {
+    const id = slug($('n-id').value);
+    if (!id) return toast('Enter an identifier.');
+    const map = kind === 'mode' ? state.modes : state.commands;
+    if (map.has(id)) return toast('That identifier exists already.');
+    const doc = kind === 'mode' ? { name: id, description: '', argsHint: '', steps: [], updatedAt: now() } : { title: id, gate: 'continue', instruction: '', updatedAt: now() };
+    try { await state.db.doc(`${kind === 'mode' ? 'modes' : 'commands'}/${id}`).set(doc); map.set(id, doc); state.sel = { kind, id }; startEdit(); }
+    catch (_) { toast('Could not create it.'); }
+  }
+
+  // ----- events -----
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.kind && b.dataset.id && b.classList.contains('item')) return select(b.dataset.kind, b.dataset.id);
+    if (b.id === 'btn-new-mode') return newItem('mode');
+    if (b.id === 'btn-new-cmd') return newItem('command');
+    if (b.id === 'btn-export') { const ex = $('export'); ex.open = true; $('export-json').textContent = libraryJSON(); ex.scrollIntoView({ behavior: 'smooth' }); return; }
+    if (b.id === 'btn-copy') { const txt = libraryJSON(); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Copied'), () => { const r = document.createRange(); r.selectNodeContents($('export-json')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Select and copy the JSON above.'); }); return; }
+    switch (b.dataset.act) {
+      case 'edit': return startEdit();
+      case 'cancel': state.editing = false; state.draft = null; return render();
+      case 'save': return save();
+      case 'delete': return remove();
+      case 'create': return create(b.dataset.kind);
+      case 'cancel-new': return render();
+      case 'addstep': { syncDraftFromForm(); const v = $('f-add').value; if (v) state.draft.steps.push(v); return render(); }
+    }
+    if (b.dataset.step !== undefined) {
+      syncDraftFromForm();
+      const i = Number(b.dataset.step); const s = state.draft.steps;
+      if (b.dataset.remove) s.splice(i, 1);
+      else { const j = i + Number(b.dataset.move); if (j >= 0 && j < s.length) { [s[i], s[j]] = [s[j], s[i]]; } }
+      return render();
+    }
+  });
+  document.addEventListener('change', (ev) => { if (ev.target.id === 'f-gate') $('gate-help').textContent = GATE_HELP[ev.target.value] || ''; });
+  $('export').addEventListener('toggle', renderExport);
+  window.addEventListener('hashchange', () => { readHash(); render(); });
+
+  // ----- store -----
+  readHash(); render();
+  (async () => {
+    const [db, user] = await Promise.all([window.claude?.use?.('db'), window.claude?.use?.('user')]);
+    if (!db) { setStatus('Store unavailable in this view. Showing nothing to edit.', true); state.loaded.modes = state.loaded.commands = true; render(); return; }
+    state.db = db;
+    try { state.canEdit = !!(user && await user.canEdit()); } catch (_) { state.canEdit = false; }
+    let pending = 2; const timer = setTimeout(() => setStatus('Store is slow to answer. Data may be out of date.', true), 10000);
+    const settle = () => { if (--pending === 0) { clearTimeout(timer); setStatus(state.canEdit ? 'Live · you can edit' : 'Live · read only'); } };
+    const sub = (coll, map, key) => db.collection(coll).onSnapshot((snap) => {
+      map.clear(); for (const d of snap.docs) if (d.exists) map.set(d.id, d.data());
+      if (!state.loaded[key]) { state.loaded[key] = true; if (!snap.metadata.fromCache) settle(); else if (pending === 2 && snap.metadata.fromCache) { /* wait for a confirmed snapshot */ } }
+      else if (!snap.metadata.fromCache && pending > 0) settle();
+      render();
+    }, (err) => { clearTimeout(timer); setStatus(err.code === 'revoked' ? 'Access changed. Reload to continue.' : 'Could not load the library.', true); state.loaded[key] = true; render(); });
+    sub('modes', state.modes, 'modes'); sub('commands', state.commands, 'commands');
+  })();
+})();
+</script>

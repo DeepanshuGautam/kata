@@ -1,0 +1,40 @@
+{
+  "name": "kata",
+  "displayName": "Kata",
+  "version": "0.1.0",
+  "description": "Practised sequences for Claude Code: define commands, chain them into modes, run a whole mode or a single command from the terminal, and watch the run in a band, status line and pane.",
+  "author": { "name": "Deepanshu Gautam", "url": "https://github.com/DeepanshuGautam" },
+  "homepage": "https://github.com/DeepanshuGautam/kata",
+  "repository": "https://github.com/DeepanshuGautam/kata",
+  "license": "MIT",
+  "keywords": ["workflow", "pull-request", "automation", "sequence", "modes", "commands", "mods"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "source": {
+      "type": "string",
+      "title": "Library source",
+      "description": "Where /kata reads commands and modes: a claude.ai artifact (the Kata Library page) or the local library file in the plugin's data directory.",
+      "options": ["artifact", "local"],
+      "default": "artifact"
+    },
+    "artifactUrl": {
+      "type": "string",
+      "title": "Kata Library artifact URL",
+      "description": "The claude.ai artifact that holds your commands and modes. Leave empty to use the local library only.",
+      "default": ""
+    },
+    "blockTrailers": {
+      "type": "string",
+      "title": "Block commit trailers",
+      "description": "Refuse git commits whose message carries Co-Authored-By, Generated-with or Signed-off-by lines: during a Kata run, always, or never.",
+      "options": ["during-kata", "always", "never"],
+      "default": "during-kata"
+    },
+    "showBand": {
+      "type": "boolean",
+      "title": "Show the run band above the prompt",
+      "description": "Draw the current mode, step and last command in a band above the prompt while a run is active.",
+      "default": true
+    }
+  }
+}

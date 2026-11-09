@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DeepanshuGautam/kata/schemas/library.schema.json",
+  "title": "Kata library",
+  "description": "Commands (single instructions Claude follows) and modes (ordered sequences of commands) for the Kata plugin. Version 1.",
+  "type": "object",
+  "required": ["version", "commands", "modes"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "commands": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/id" },
+      "additionalProperties": { "$ref": "#/$defs/command" }
+    },
+    "modes": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/id" },
+      "additionalProperties": { "$ref": "#/$defs/mode" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._~-]{0,59}$" },
+    "gate": { "type": "string", "enum": ["continue", "confirm", "stop-on-fail"] },
+    "command": {
+      "type": "object",
+      "required": ["title", "instruction"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "gate": { "$ref": "#/$defs/gate", "default": "continue" },
+        "instruction": { "type": "string", "minLength": 1, "maxLength": 8000 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "step": {
+      "oneOf": [
+        { "$ref": "#/$defs/id" },
+        {
+          "type": "object",
+          "required": ["command"],
+          "additionalProperties": false,
+          "properties": {
+            "command": { "$ref": "#/$defs/id" },
+            "gate": { "$ref": "#/$defs/gate" }
+          }
+        }
+      ]
+    },
+    "mode": {
+      "type": "object",
+      "required": ["name", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 400 },
+        "argsHint": { "type": "string", "maxLength": 120 },
+        "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

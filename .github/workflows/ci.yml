@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate plugin and marketplace
+        # Not --strict: the root CLAUDE.md is a contributor note, which strict mode flags as unloaded plugin context.
+        run: claude plugin validate .
+      - name: Validate library files against the schema
+        run: |
+          npm install -g ajv-cli ajv-formats
+          ajv validate -c ajv-formats -s schemas/library.schema.json -d library/default.json
+      - name: Plugin tests
+        run: claude plugin test .

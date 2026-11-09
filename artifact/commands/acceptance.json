@@ -1,0 +1,6 @@
+{
+  "title": "Acceptance criteria and TODOs",
+  "gate": "continue",
+  "instruction": "Compare the result with the scope statement from the read step. For each acceptance criterion write met or not met with the evidence (file, test name, command output). List any TODO or task item from the plan that this PR was meant to close and whether it is closed. If anything is not met, return to the implement step for that item and run the following steps again. When a vault path is configured, set the matching vault task's Status to Done. Record the table in the state file.",
+  "updatedAt": "2026-11-09T00:00:00Z"
+}

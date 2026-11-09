@@ -1,0 +1,6 @@
+{
+  "title": "Lint, tests, architecture check",
+  "gate": "stop-on-fail",
+  "instruction": "Run the project's checks. With a mise.toml present run `mise run lint`, `mise run test` and `mise run arch:check` (skip a task that does not exist and say so). Without mise, run the equivalents named in CLAUDE.md or the project's standard tooling. Fix failures and rerun until everything passes. Do not continue to the next step while any check fails; if a failure cannot be fixed inside the scope, stop and report it to the user with the output.",
+  "updatedAt": "2026-11-09T00:00:00Z"
+}
