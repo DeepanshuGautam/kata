@@ -12,18 +12,18 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Load the library
 
-The library has two collections: `modes` (`{ name, description, argsHint, steps: [commandId | { command, gate? }] }`) and `commands` (`{ title, gate, instruction }`). Gates are `continue`, `confirm`, `stop-on-fail`.
+The library has two collections: `modes` (`{ name, description, argsHint, steps: [commandId | { command, gate? }] }`) and `commands` (`{ title, slash, gate, instruction }`; `slash` is the slash command that runs that one command, such as `kata-review`). Gates are `continue`, `confirm`, `stop-on-fail`.
 
 Resolve it in this order and say in one line which source you used:
 
-1. **Artifact** when the configuration section `kata:config` in your context says `library source: artifact` and gives an artifact URL, and the `ArtifactData` tool is available (load it with ToolSearch `select:ArtifactData` if it is deferred). Read both collections with `ArtifactData` `list` (`collection: "modes"` and `collection: "commands"`). Then write the result in the local format below to the data file so later sessions have it offline.
+1. **Artifact** when the configuration section `kata:config` in your context says `library source: artifact` and gives an artifact URL, and the `ArtifactData` tool is available (load it with ToolSearch `select:ArtifactData` if it is deferred). Read both collections with `ArtifactData` `list` (`collection: "modes"` and `collection: "commands"`). Then write the result in the local format below to the data file, keeping every command's `slash`, whenever it differs from what the file holds. Later sessions use it offline, and the Kata mod reads it to register each command's slash command.
 2. **Local data file** `${CLAUDE_PLUGIN_DATA}/library.json` (when `${CLAUDE_PLUGIN_DATA}` is empty use `~/.claude/kata/library.json`).
 3. **Bundled default** `${CLAUDE_PLUGIN_ROOT}/library/default.json`, which holds the `pr` mode and its eight commands.
 
 Local format:
 
 ```json
-{ "version": 1, "commands": { "<id>": { "title": "", "gate": "continue", "instruction": "" } },
+{ "version": 1, "commands": { "<id>": { "title": "", "slash": "kata-<id>", "gate": "continue", "instruction": "" } },
   "modes": { "<id>": { "name": "", "description": "", "argsHint": "", "steps": ["<commandId>"] } } }
 ```
 
@@ -36,7 +36,7 @@ When you resume a run and a step's `command` id is no longer in the library, loo
 ## 2. Parse the arguments
 
 - `modes` → print a table of modes: id, name, number of steps, argument hint. Stop.
-- `commands` → print a table of commands: id, title, gate, and the first sentence of the instruction. Stop.
+- `commands` → print a table of commands: id, slash command, title, gate, and the first sentence of the instruction. Stop.
 - `status` → read `.claude/kata/state.json` in the project root and print the mode, status, current step, each step's status and note. Stop.
 - `stop` → set the state file's `status` to `stopped`, `updatedAt` now, and print one line. Stop.
 - `run <command> [args]` → run that single command (section 4) with a one-step run whose `mode` is `run` and `modeName` is the command title.

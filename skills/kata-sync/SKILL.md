@@ -14,7 +14,7 @@ Local file: `${CLAUDE_PLUGIN_DATA}/library.json` (when `${CLAUDE_PLUGIN_DATA}` i
 2. Without `--from`: load the `ArtifactData` tool (ToolSearch `select:ArtifactData`) and `list` the `modes` and `commands` collections of the artifact. Convert them to the local format:
 
    ```json
-   { "version": 1, "exportedAt": "<ISO>", "commands": { "<id>": { "title", "gate", "instruction" } },
+   { "version": 1, "exportedAt": "<ISO>", "commands": { "<id>": { "title", "slash", "gate", "instruction" } },
      "modes": { "<id>": { "name", "description", "argsHint", "steps": ["<commandId>"] } } }
    ```
 

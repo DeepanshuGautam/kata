@@ -3,63 +3,51 @@
   "commands": {
     "read": {
       "title": "Read the plan",
+      "slash": "kata-read",
       "gate": "continue",
       "instruction": "Read, in this order, before writing any code: CLAUDE.md at the repository root; the implementation plan for this release (Spec/plans/<release>.md when the repo has it, otherwise the plan note the user named); the open tasks of the matching project in the Obsidian vault when a vault path is configured in CLAUDE.md; any acceptance criteria for the scope given in the arguments. Then write a scope statement into the Kata state file: the PR's goal in one sentence, the files you expect to touch, the acceptance criteria as a checklist, and what is explicitly out of scope. Print the scope statement to the user. Do not write code in this step."
     },
     "implement": {
       "title": "Implement the scope",
+      "slash": "kata-implement",
       "gate": "continue",
       "instruction": "Implement only what the scope statement lists, following the architecture rules in CLAUDE.md and the plan's file layout. Add or update tests alongside the code. Do not add a dependency, change a public contract, or touch files outside the scope without asking the user in plain text first. Do not commit in this step."
     },
     "review": {
       "title": "Full self-review",
+      "slash": "kata-review",
       "gate": "continue",
       "instruction": "Review the whole change yourself: run git diff against the base branch and read every touched file in full. Do not invoke any review skill, slash command or subagent for this. Produce a numbered issue list covering correctness, missing or weak tests, architecture-rule violations (dependency direction, banned imports, logging rules), naming and API consistency, leftover debug code or TODOs, and documentation or localisation gaps. Each issue names the file and line and says what to change. Save the list into the Kata state file and print it. An empty list is a valid result only after you have read every touched file."
     },
     "fix": {
       "title": "Fix every issue",
+      "slash": "kata-fix",
       "gate": "confirm",
       "instruction": "Fix every issue on the list. When an issue needs a product or design decision, ask the user in plain text (never a form or multiple-choice widget), wait for the answer, then continue. After fixing, run the review step once more on the new diff; repeat fix and review until the list is empty. Record the final empty list in the state file."
     },
     "verify": {
       "title": "Lint, tests, architecture check",
+      "slash": "kata-verify",
       "gate": "stop-on-fail",
       "instruction": "Run the project's checks. With a mise.toml present run `mise run lint`, `mise run test` and `mise run arch:check` (skip a task that does not exist and say so). Without mise, run the equivalents named in CLAUDE.md or the project's standard tooling. Fix failures and rerun until everything passes. Do not continue to the next step while any check fails; if a failure cannot be fixed inside the scope, stop and report it to the user with the output."
     },
     "commit": {
       "title": "Commit without trailers",
+      "slash": "kata-commit",
       "gate": "continue",
       "instruction": "Stage only the files in scope (never `git add -A` blindly; list what is staged). Commit with a Conventional Commits message: `type(scope): summary` under 72 characters, a blank line, then a body that says what changed and why. The message carries no trailers of any kind: no Co-Authored-By, no Generated-with, no Signed-off-by. The Kata hook blocks a commit that carries one; rewrite the message rather than bypassing the hook."
     },
     "acceptance": {
       "title": "Acceptance criteria and TODOs",
+      "slash": "kata-acceptance",
       "gate": "continue",
       "instruction": "Compare the result with the scope statement from the read step. For each acceptance criterion write met or not met with the evidence (file, test name, command output). List any TODO or task item from the plan that this PR was meant to close and whether it is closed. If anything is not met, return to the implement step for that item and run the following steps again. When a vault path is configured, set the matching vault task's Status to Done. Record the table in the state file."
     },
     "pr": {
       "title": "Open the pull request",
+      "slash": "kata-pr",
       "gate": "continue",
       "instruction": "Push the branch and open the pull request with `gh pr create`. Title: the commit summary. Body, in this order: `## Summary` with three to six bullets of what changed; `## Description` with why the change is made, the design decisions taken, and what a reviewer should read first; `## Testing` with the commands run and their results; `## Checklist` with each acceptance criterion as a ticked or unticked box. No attribution footer or generated-by line. Print the PR URL, then mark the Kata run finished in the state file."
-    },
-    "changelog": {
-      "title": "Update the changelog",
-      "gate": "continue",
-      "instruction": "Update CHANGELOG.md in Keep a Changelog format. Read the commits since the last release tag (git log <last tag>..HEAD; with no tag, the whole history) and the merged pull requests when `gh` is available. Move the entries under [Unreleased] into a new section for the version this release will carry, adding any change the log misses, grouped under Added, Changed, Deprecated, Removed, Fixed and Security. Leave an empty [Unreleased] section on top. When the version is not known yet, write the section as [Unreleased] and say that the version-bump step will name it. Print the new section. Do not commit in this step."
-    },
-    "version-bump": {
-      "title": "Bump the version",
-      "gate": "confirm",
-      "instruction": "Choose the next version with Semantic Versioning from the changelog section: a breaking change raises the major version, an added feature the minor version, fixes only the patch version. When the run's arguments name a version, use that one. Write it to every file that carries the version (package.json, plugin.json and marketplace.json entries, pyproject.toml, Cargo.toml, a VERSION file, or what CLAUDE.md names) and to the changelog section heading with today's date. List each file changed with the old and new version. Ask the user in plain text when the change level is unclear. Do not commit or tag in this step."
-    },
-    "tag": {
-      "title": "Tag the release",
-      "gate": "stop-on-fail",
-      "instruction": "Check that the working tree is clean and that the release commit (the changelog and version bump) is on the branch. Create an annotated tag `v<version>` on that commit with the message `Release v<version>` and push the commit and the tag to the remote. A tag that already exists is a failure: stop and report it, never move or delete an existing tag."
-    },
-    "release-notes": {
-      "title": "Publish release notes",
-      "gate": "continue",
-      "instruction": "Create the GitHub release for the new tag with `gh release create v<version> --title \"v<version>\" --notes-file <file>`, the notes being the changelog section for this version plus a one-line upgrade note when the release has a breaking change. Use `--draft` when the run's arguments say draft. No attribution footer or generated-by line. Print the release URL, then mark the Kata run finished in the state file."
     }
   },
   "modes": {
@@ -76,30 +64,6 @@
         "commit",
         "acceptance",
         "pr"
-      ]
-    },
-    "hotfix": {
-      "name": "Hotfix",
-      "description": "Read the scope, make the smallest fix, verify, commit without trailers and open a PR. No self-review loop and no acceptance pass, for urgent one-line fixes.",
-      "argsHint": "<what is broken>",
-      "steps": [
-        "read",
-        "implement",
-        "verify",
-        "commit",
-        "pr"
-      ]
-    },
-    "release": {
-      "name": "Release",
-      "description": "Write the changelog section, bump the version, commit it without trailers, tag the release and publish the notes.",
-      "argsHint": "[version] [draft]",
-      "steps": [
-        "changelog",
-        "version-bump",
-        "commit",
-        "tag",
-        "release-notes"
       ]
     }
   }

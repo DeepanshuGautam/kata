@@ -127,6 +127,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
 (() => {
   const $ = (id) => document.getElementById(id);
   const GATES = ['continue', 'confirm', 'stop-on-fail'];
+  const RESERVED_SLASH = ['kata', 'kata-sync', 'kata-edit', 'kata-panel'];
   const GATE_HELP = {
     'continue': 'Go straight to the next command.',
     'confirm': 'Pause after this command and wait for the user before the next one.',
@@ -168,7 +169,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (!ids.length) { el.innerHTML = `<div class="empty">${state.loaded[elId] ? 'None yet.' : 'Loading…'}</div>`; return; }
     el.innerHTML = ids.map(id => {
       const d = map.get(id); const active = state.sel && state.sel.kind === kind && state.sel.id === id;
-      const count = kind === 'mode' ? `${(d.steps || []).length} steps` : (d.gate || 'continue');
+      const count = kind === 'mode' ? `${(d.steps || []).length} steps` : (d.slash ? `/${d.slash}` : (d.gate || 'continue'));
       const label = kind === 'mode' ? esc(d.name || id) : esc(d.title || id);
       return `<button class="item${active ? ' active' : ''}" data-kind="${kind}" data-id="${esc(id)}"><span class="name">${label} <span class="id mono">${esc(id)}</span></span><span class="count">${esc(count)}</span></button>`;
     }).join('');
@@ -233,15 +234,16 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
           <div class="field"><label for="f-title">Title</label><input id="f-title" value="${esc(d.title || '')}"></div>
           <div class="field"><label for="f-gate">Gate</label><select id="f-gate">${GATES.map(g => `<option value="${g}" ${(d.gate || 'continue') === g ? 'selected' : ''}>${g}</option>`).join('')}</select><span class="hint" id="gate-help">${esc(GATE_HELP[d.gate || 'continue'])}</span></div>
         </div>
+        <div class="field"><label for="f-slash">Slash command</label><input id="f-slash" value="${esc(d.slash || '')}" placeholder="kata-${esc(id)}" spellcheck="false"><span class="hint">Type <code>/${esc(d.slash || 'kata-' + id)}</code> in Claude Code to run just this command. Lowercase letters, digits, - and _. A change shows up in the next session that has run any /kata command since; nothing to reinstall.</span></div>
         <div class="field"><label for="f-instr">Instruction (what Claude does when this command runs)</label><textarea id="f-instr" rows="10">${esc(d.instruction || '')}</textarea></div>
         <div class="danger-zone"><button class="danger" data-act="delete" ${usedBy.length ? 'disabled title="Remove it from its modes first"' : ''}>Delete command</button></div>` : `
-        <p style="margin:0 0 12px"><span class="pill ${esc(d.gate || 'continue')}">${esc(d.gate || 'continue')}</span> <span class="status">${esc(GATE_HELP[d.gate || 'continue'] || '')}</span></p>
+        <p style="margin:0 0 12px">${d.slash ? `<code>/${esc(d.slash)}</code> ` : ''}<span class="pill ${esc(d.gate || 'continue')}">${esc(d.gate || 'continue')}</span> <span class="status">${esc(GATE_HELP[d.gate || 'continue'] || '')}</span></p>
         <div class="instruction">${esc(d.instruction || '')}</div>
         <p class="status" style="margin-top:14px">${usedBy.length ? `Used by: ${usedBy.map(m => `<code>${esc(m)}</code>`).join(', ')}. ` : 'Not part of any mode. '}Run it alone with <code>/kata run ${esc(id)}</code>.</p>`}`;
   }
   function libraryJSON() {
     const out = { version: 1, exportedAt: now(), commands: {}, modes: {} };
-    for (const [id, c] of [...state.commands.entries()].sort()) out.commands[id] = { title: c.title || '', gate: c.gate || 'continue', instruction: c.instruction || '' };
+    for (const [id, c] of [...state.commands.entries()].sort()) out.commands[id] = { title: c.title || '', ...(c.slash ? { slash: c.slash } : {}), gate: c.gate || 'continue', instruction: c.instruction || '' };
     for (const [id, m] of [...state.modes.entries()].sort()) out.modes[id] = { name: m.name || '', description: m.description || '', argsHint: m.argsHint || '', steps: (m.steps || []).map(stepId) };
     return JSON.stringify(out, null, 2);
   }
@@ -252,7 +254,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
   function syncDraftFromForm() {
     if (!state.editing) return;
     if (state.sel.kind === 'mode') { state.draft.name = $('f-name').value; state.draft.argsHint = $('f-args').value; state.draft.description = $('f-desc').value; }
-    else { state.draft.title = $('f-title').value; state.draft.gate = $('f-gate').value; state.draft.instruction = $('f-instr').value; }
+    else { state.draft.title = $('f-title').value; state.draft.slash = $('f-slash').value.trim().toLowerCase(); state.draft.gate = $('f-gate').value; state.draft.instruction = $('f-instr').value; }
   }
   async function save() {
     syncDraftFromForm();
@@ -260,6 +262,11 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (state.sel.kind === 'mode' && !d.name.trim()) return toast('A mode needs a name.');
     if (state.sel.kind === 'command' && !d.title.trim()) return toast('A command needs a title.');
     if (state.sel.kind === 'command' && !d.instruction.trim()) return toast('A command needs an instruction.');
+    if (state.sel.kind === 'command') {
+      if (!d.slash) delete d.slash;
+      else if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(d.slash) || RESERVED_SLASH.includes(d.slash)) return toast('Slash command: lowercase letters, digits, - and _, and not a Kata built-in.');
+      else if ([...state.commands.entries()].some(([cid, c]) => cid !== state.sel.id && c.slash === d.slash)) return toast(`/${d.slash} is taken by another command.`);
+    }
     const path = `${state.sel.kind === 'mode' ? 'modes' : 'commands'}/${state.sel.id}`;
     try { await state.db.doc(path).set(d); state.editing = false; state.draft = null; toast('Saved'); }
     catch (e) { toast(e && e.code === 'invalid_argument' ? 'Not allowed to write here.' : 'Save failed. Try again.'); }
@@ -319,7 +326,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (!id) return toast('Enter an identifier.');
     const map = kind === 'mode' ? state.modes : state.commands;
     if (map.has(id)) return toast('That identifier exists already.');
-    const doc = kind === 'mode' ? { name: id, description: '', argsHint: '', steps: [], updatedAt: now() } : { title: id, gate: 'continue', instruction: '', updatedAt: now() };
+    const doc = kind === 'mode' ? { name: id, description: '', argsHint: '', steps: [], updatedAt: now() } : { title: id, slash: `kata-${id}`, gate: 'continue', instruction: '', updatedAt: now() };
     try { await state.db.doc(`${kind === 'mode' ? 'modes' : 'commands'}/${id}`).set(doc); map.set(id, doc); state.sel = { kind, id }; startEdit(); }
     catch (_) { toast('Could not create it.'); }
   }

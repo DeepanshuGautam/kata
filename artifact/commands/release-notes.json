@@ -1,6 +1,0 @@
-{
-  "title": "Publish release notes",
-  "gate": "continue",
-  "instruction": "Create the GitHub release for the new tag with `gh release create v<version> --title \"v<version>\" --notes-file <file>`, the notes being the changelog section for this version plus a one-line upgrade note when the release has a breaking change. Use `--draft` when the run's arguments say draft. No attribution footer or generated-by line. Print the release URL, then mark the Kata run finished in the state file.",
-  "updatedAt": "2026-11-09T00:00:00Z"
-}

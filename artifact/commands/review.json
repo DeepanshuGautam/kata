@@ -1,5 +1,6 @@
 {
   "title": "Full self-review",
+  "slash": "kata-review",
   "gate": "continue",
   "instruction": "Review the whole change yourself: run git diff against the base branch and read every touched file in full. Do not invoke any review skill, slash command or subagent for this. Produce a numbered issue list covering correctness, missing or weak tests, architecture-rule violations (dependency direction, banned imports, logging rules), naming and API consistency, leftover debug code or TODOs, and documentation or localisation gaps. Each issue names the file and line and says what to change. Save the list into the Kata state file and print it. An empty list is a valid result only after you have read every touched file.",
   "updatedAt": "2026-11-09T00:00:00Z"

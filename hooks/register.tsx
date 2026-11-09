@@ -78,6 +78,78 @@ async function refresh($: EngineInterface): Promise<void> {
   lastStatus = parsed.status
 }
 
+// Step commands: each library command may name a slash command in its `slash` field. The mod reads the
+// local library cache the /kata skill writes, registers those names, and runs `/kata run <id>` for them.
+const SLASH = /^[a-z0-9][a-z0-9_-]{0,63}$/
+const RESERVED = new Set(['kata', 'kata-sync', 'kata-edit', 'kata-panel'])
+type CachedCommand = { title?: unknown; slash?: unknown }
+let slashToId = new Map<string, string>()
+let registered = new Set<string>()
+let libraryMtime = -1
+let kataCommand: string | undefined
+
+/** The local library caches the /kata skill writes, newest first is decided by mtime. */
+async function libraryPaths($: EngineInterface): Promise<string[]> {
+  const paths: string[] = []
+  const data = await $.env.get('CLAUDE_PLUGIN_DATA').catch(() => undefined)
+  if (data) paths.push(`${data}/library.json`)
+  const home = await $.env.get('HOME').catch(() => undefined)
+  if (home) paths.push(`${home}/.claude/kata/library.json`)
+  return paths
+}
+
+/** The bundled library, used for step commands until the skill has written a local cache. */
+function bundledPath($: EngineInterface): string {
+  return `${$.plugin.root}/library/default.json`
+}
+
+/** Re-reads the library cache when it changed and registers each command's `slash` name. */
+async function refreshSlash($: EngineInterface): Promise<void> {
+  let newest: { path: string; mtime: number } | undefined
+  for (const path of await libraryPaths($)) {
+    const st = await $.fs.stat(path).catch(() => undefined)
+    if (st && st.kind === 'file' && (!newest || st.mtimeMs > newest.mtime)) newest = { path, mtime: st.mtimeMs }
+  }
+  if (!newest) {
+    const path = bundledPath($)
+    const st = await $.fs.stat(path).catch(() => undefined)
+    if (st && st.kind === 'file') newest = { path, mtime: st.mtimeMs }
+  }
+  if (!newest || newest.mtime === libraryMtime) return
+  libraryMtime = newest.mtime
+  const text = await $.fs.read(newest.path).catch(() => undefined)
+  if (typeof text !== 'string') return
+  let commands: Record<string, CachedCommand>
+  try {
+    const lib = JSON.parse(text) as { commands?: Record<string, CachedCommand> }
+    commands = lib && typeof lib.commands === 'object' && lib.commands ? lib.commands : {}
+  } catch {
+    return
+  }
+  const next = new Map<string, string>()
+  for (const [id, c] of Object.entries(commands)) {
+    const slash = typeof c?.slash === 'string' ? c.slash.trim() : ''
+    if (SLASH.test(slash) && !RESERVED.has(slash) && !next.has(slash)) next.set(slash, id)
+  }
+  slashToId = next
+  for (const [slash, id] of next) {
+    if (registered.has(slash)) continue
+    const title = typeof commands[id]?.title === 'string' ? (commands[id]?.title as string) : id
+    const ok = await $.command
+      .register({ name: slash, description: `Kata step: ${title} (runs /kata run ${id})`, argumentHint: '[args]' })
+      .then(() => true, () => false)
+    if (ok) registered.add(slash)
+  }
+}
+
+/** The /kata skill's name in this session: `kata`, or `kata:kata` where plugin skills are namespaced. */
+async function kataName($: EngineInterface): Promise<string> {
+  if (kataCommand) return kataCommand
+  const names = (await $.command.list().catch(() => [])).map(c => c.name)
+  kataCommand = names.includes('kata') ? 'kata' : names.find(n => n.endsWith(':kata')) ?? 'kata'
+  return kataCommand
+}
+
 export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -85,8 +157,22 @@ export const register: Register = (on, options) => {
       description: 'Open the Kata pane: the running mode, its steps and the last command',
     })
     await refresh($)
-    $.clock.every(2000, () => refresh($))
+    await refreshSlash($).catch(() => undefined)
+    $.clock.every(2000, () => Promise.all([refresh($), refreshSlash($).catch(() => undefined)]).then(() => undefined))
     return next(e)
+  })
+
+  // A step command typed by the person runs that one library command through the /kata skill.
+  on('command.run', async ($, e, next) => {
+    if (!registered.has(e.command)) return next(e)
+    const id = slashToId.get(e.command)
+    if (!id) return { text: `/${e.command} is no longer in the Kata library. Run /kata commands to see the current names.` }
+    const args = `run ${id}${e.args.trim() ? ` ${e.args.trim()}` : ''}`
+    const name = await kataName($)
+    // A command hook cannot start another command (it would wait on itself), so the /kata run starts from a
+    // timer once this command has answered; the engine queues it until the session is idle.
+    $.clock.after(50, () => $.command.run({ command: name, args }).then(() => undefined, () => undefined))
+    return { text: `Kata ▸ /${name} ${args}` }
   })
 
   on('command.run', { command: 'kata-panel' }, async $ => {

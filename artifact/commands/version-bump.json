@@ -1,6 +1,0 @@
-{
-  "title": "Bump the version",
-  "gate": "confirm",
-  "instruction": "Choose the next version with Semantic Versioning from the changelog section: a breaking change raises the major version, an added feature the minor version, fixes only the patch version. When the run's arguments name a version, use that one. Write it to every file that carries the version (package.json, plugin.json and marketplace.json entries, pyproject.toml, Cargo.toml, a VERSION file, or what CLAUDE.md names) and to the changelog section heading with today's date. List each file changed with the old and new version. Ask the user in plain text when the change level is unclear. Do not commit or tag in this step.",
-  "updatedAt": "2026-11-09T00:00:00Z"
-}

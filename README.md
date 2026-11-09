@@ -2,11 +2,9 @@
 
 Practised sequences for Claude Code. A **command** is one instruction Claude follows. A **mode** is an ordered list of commands. Run a whole mode or one command from the terminal, keep the library in a claude.ai page or a local file, and watch the run in a band above the prompt, the status line and a pane.
 
-Ships with three modes built from twelve commands:
+Ships with one mode, **pr**: read the plan → implement → full self-review → fix everything → lint, tests and architecture check → commit without trailers → acceptance criteria → open an itemised pull request.
 
-- **pr**: read the plan → implement → full self-review → fix everything → lint, tests and architecture check → commit without trailers → acceptance criteria → open an itemised pull request.
-- **hotfix**: read → implement → verify → commit → pr, for urgent small fixes.
-- **release**: changelog → version bump (pauses for confirmation) → commit → tag → release notes.
+Every step is also its own slash command: `/kata-read`, `/kata-implement`, `/kata-review`, `/kata-fix`, `/kata-verify`, `/kata-commit`, `/kata-acceptance`, `/kata-pr`. Each command's `slash` property sets that name. Change it on the Kata Library page, and the new name is registered within a few seconds of the next `/kata` call, with no reinstall.
 
 A command is written once and any mode can list it. Rename a command or mode on the Kata Library page and the modes that use it follow; `/kata` reads the page at every run, so nothing needs reinstalling.
 
