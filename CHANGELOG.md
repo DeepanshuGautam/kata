@@ -12,6 +12,10 @@ All notable changes to Kata are recorded here. The format follows Keep a Changel
 - Plugin tests (`hooks/kata.test.tsx`): commit guard per `blockTrailers` policy, band shown, hidden and restored, pane steps, `/kata-panel`, `kata:config` section, run start and end toasts.
 - Plugin icon at `.claude-plugin/icon.png`; `tsconfig.json` for `tsc -p .` against the engine types.
 
+- `hotfix` mode (read, implement, verify, commit, pr) and `release` mode with four new commands: `changelog`, `version-bump`, `tag`, `release-notes`.
+- Rename on the Kata Library page: changes a command's or mode's id and repoints every mode that lists the command.
+- The runner loads the library fresh at every invocation and follows a command renamed during a paused run by its title.
+
 ### Fixed
 - The `fix` command used the gate `ask`, which the schema does not allow; it is now `confirm`.
 - The `isActive` type guard narrowed a finished run to `never`, so the end-of-run toast did not type-check.

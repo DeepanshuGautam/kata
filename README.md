@@ -2,7 +2,13 @@
 
 Practised sequences for Claude Code. A **command** is one instruction Claude follows. A **mode** is an ordered list of commands. Run a whole mode or one command from the terminal, keep the library in a claude.ai page or a local file, and watch the run in a band above the prompt, the status line and a pane.
 
-Ships with one mode, **pr**: read the plan → implement → full self-review → fix everything → lint, tests and architecture check → commit without trailers → acceptance criteria → open an itemised pull request.
+Ships with three modes built from twelve commands:
+
+- **pr**: read the plan → implement → full self-review → fix everything → lint, tests and architecture check → commit without trailers → acceptance criteria → open an itemised pull request.
+- **hotfix**: read → implement → verify → commit → pr, for urgent small fixes.
+- **release**: changelog → version bump (pauses for confirmation) → commit → tag → release notes.
+
+A command is written once and any mode can list it. Rename a command or mode on the Kata Library page and the modes that use it follow; `/kata` reads the page at every run, so nothing needs reinstalling.
 
 ## Install
 
@@ -63,7 +69,7 @@ Ask Claude in a claude.ai-connected session: "Publish a Kata Library artifact fo
 ## Roadmap
 
 - **0.1** runner, gates, library sources, mods, Kata Library page, `pr` mode.
-- **0.2** flags (`--dry-run`, `--from`, `--only`, `--skip`, `--no-confirm`), templating and `params`, mode-as-step and `when` conditions, run journal and `/kata history`, `/kata doctor`, drift protection for shared libraries, project-local overrides, pane Stop button, native notifications, `hotfix` mode.
+- **0.2** flags (`--dry-run`, `--from`, `--only`, `--skip`, `--no-confirm`), templating and `params`, mode-as-step and `when` conditions, run journal and `/kata history`, `/kata doctor`, drift protection for shared libraries, project-local overrides, pane Stop button, native notifications.
 - **0.3** eval suite, CI and release workflows, ADRs, `release` mode, directory listing.
 
 ## License

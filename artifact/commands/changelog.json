@@ -1,0 +1,6 @@
+{
+  "title": "Update the changelog",
+  "gate": "continue",
+  "instruction": "Update CHANGELOG.md in Keep a Changelog format. Read the commits since the last release tag (git log <last tag>..HEAD; with no tag, the whole history) and the merged pull requests when `gh` is available. Move the entries under [Unreleased] into a new section for the version this release will carry, adding any change the log misses, grouped under Added, Changed, Deprecated, Removed, Fixed and Security. Leave an empty [Unreleased] section on top. When the version is not known yet, write the section as [Unreleased] and say that the version-bump step will name it. Print the new section. Do not commit in this step.",
+  "updatedAt": "2026-11-09T00:00:00Z"
+}

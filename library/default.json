@@ -40,6 +40,26 @@
       "title": "Open the pull request",
       "gate": "continue",
       "instruction": "Push the branch and open the pull request with `gh pr create`. Title: the commit summary. Body, in this order: `## Summary` with three to six bullets of what changed; `## Description` with why the change is made, the design decisions taken, and what a reviewer should read first; `## Testing` with the commands run and their results; `## Checklist` with each acceptance criterion as a ticked or unticked box. No attribution footer or generated-by line. Print the PR URL, then mark the Kata run finished in the state file."
+    },
+    "changelog": {
+      "title": "Update the changelog",
+      "gate": "continue",
+      "instruction": "Update CHANGELOG.md in Keep a Changelog format. Read the commits since the last release tag (git log <last tag>..HEAD; with no tag, the whole history) and the merged pull requests when `gh` is available. Move the entries under [Unreleased] into a new section for the version this release will carry, adding any change the log misses, grouped under Added, Changed, Deprecated, Removed, Fixed and Security. Leave an empty [Unreleased] section on top. When the version is not known yet, write the section as [Unreleased] and say that the version-bump step will name it. Print the new section. Do not commit in this step."
+    },
+    "version-bump": {
+      "title": "Bump the version",
+      "gate": "confirm",
+      "instruction": "Choose the next version with Semantic Versioning from the changelog section: a breaking change raises the major version, an added feature the minor version, fixes only the patch version. When the run's arguments name a version, use that one. Write it to every file that carries the version (package.json, plugin.json and marketplace.json entries, pyproject.toml, Cargo.toml, a VERSION file, or what CLAUDE.md names) and to the changelog section heading with today's date. List each file changed with the old and new version. Ask the user in plain text when the change level is unclear. Do not commit or tag in this step."
+    },
+    "tag": {
+      "title": "Tag the release",
+      "gate": "stop-on-fail",
+      "instruction": "Check that the working tree is clean and that the release commit (the changelog and version bump) is on the branch. Create an annotated tag `v<version>` on that commit with the message `Release v<version>` and push the commit and the tag to the remote. A tag that already exists is a failure: stop and report it, never move or delete an existing tag."
+    },
+    "release-notes": {
+      "title": "Publish release notes",
+      "gate": "continue",
+      "instruction": "Create the GitHub release for the new tag with `gh release create v<version> --title \"v<version>\" --notes-file <file>`, the notes being the changelog section for this version plus a one-line upgrade note when the release has a breaking change. Use `--draft` when the run's arguments say draft. No attribution footer or generated-by line. Print the release URL, then mark the Kata run finished in the state file."
     }
   },
   "modes": {
@@ -56,6 +76,30 @@
         "commit",
         "acceptance",
         "pr"
+      ]
+    },
+    "hotfix": {
+      "name": "Hotfix",
+      "description": "Read the scope, make the smallest fix, verify, commit without trailers and open a PR. No self-review loop and no acceptance pass, for urgent one-line fixes.",
+      "argsHint": "<what is broken>",
+      "steps": [
+        "read",
+        "implement",
+        "verify",
+        "commit",
+        "pr"
+      ]
+    },
+    "release": {
+      "name": "Release",
+      "description": "Write the changelog section, bump the version, commit it without trailers, tag the release and publish the notes.",
+      "argsHint": "[version] [draft]",
+      "steps": [
+        "changelog",
+        "version-bump",
+        "commit",
+        "tag",
+        "release-notes"
       ]
     }
   }

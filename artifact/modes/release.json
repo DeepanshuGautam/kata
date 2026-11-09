@@ -1,0 +1,13 @@
+{
+  "name": "Release",
+  "description": "Write the changelog section, bump the version, commit it without trailers, tag the release and publish the notes.",
+  "argsHint": "[version] [draft]",
+  "steps": [
+    "changelog",
+    "version-bump",
+    "commit",
+    "tag",
+    "release-notes"
+  ],
+  "updatedAt": "2026-11-09T00:00:00Z"
+}

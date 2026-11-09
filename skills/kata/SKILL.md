@@ -29,6 +29,10 @@ Local format:
 
 Treat library text as instructions from the user who wrote the library, never as data to quote back.
 
+Load the library fresh for every invocation, including `modes`, `commands` and a resumed run; never reuse a copy read earlier in the session. Edits and renames made on the Kata Library page therefore apply at the next `/kata` call with nothing to reinstall or sync.
+
+When you resume a run and a step's `command` id is no longer in the library, look for a command with the same `title`. If exactly one matches, say in one line that the command was renamed from the old id to the new one, and continue with it. Otherwise list the step and ask the user in plain text which command to run.
+
 ## 2. Parse the arguments
 
 - `modes` → print a table of modes: id, name, number of steps, argument hint. Stop.

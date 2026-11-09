@@ -1,0 +1,6 @@
+{
+  "title": "Tag the release",
+  "gate": "stop-on-fail",
+  "instruction": "Check that the working tree is clean and that the release commit (the changelog and version bump) is on the branch. Create an annotated tag `v<version>` on that commit with the message `Release v<version>` and push the commit and the tag to the remote. A tag that already exists is a failure: stop and report it, never move or delete an existing tag.",
+  "updatedAt": "2026-11-09T00:00:00Z"
+}

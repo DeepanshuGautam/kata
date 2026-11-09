@@ -191,6 +191,12 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
       : `<div class="actions"><button data-act="edit">Edit</button></div>`)
     : `<div class="readonly-note">You can read this ${kind}. Editing needs edit access to the artifact.</div>`;
 
+  // Renaming changes the id /kata uses. A command's modes are repointed, so nothing breaks and nothing needs reinstalling.
+  const idField = (kind, id) => `
+        <div class="field"><label for="f-id">Identifier</label>
+          <div class="actions"><input id="f-id" value="${esc(id)}" style="flex:1;min-width:160px;width:auto" spellcheck="false"><button data-act="rename">Rename</button></div>
+          <span class="hint">${kind === 'command' ? 'Used as <code>/kata run ' + esc(id) + '</code>. Modes that list this command are updated with it.' : 'Used as <code>/kata ' + esc(id) + '</code>.'} The next /kata run picks the change up; nothing to reinstall.</span></div>`;
+
   function renderMode(ed, id, doc) {
     const d = state.editing ? state.draft : doc;
     const steps = (d.steps || []).map(stepId);
@@ -204,7 +210,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     const addable = [...state.commands.keys()].sort();
     ed.innerHTML = `
       <header><div><div class="eyebrow">Mode · <span class="mono">${esc(id)}</span></div><h2>${state.editing ? '' : esc(d.name || id)}</h2></div>${editBar('mode')}</header>
-      ${state.editing ? `
+      ${state.editing ? `${idField('mode', id)}
         <div class="row">
           <div class="field"><label for="f-name">Name</label><input id="f-name" value="${esc(d.name || '')}"></div>
           <div class="field"><label for="f-args">Argument hint</label><input id="f-args" value="${esc(d.argsHint || '')}" placeholder="&lt;release&gt; &lt;PR scope&gt;"></div>
@@ -222,7 +228,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     const usedBy = [...state.modes.entries()].filter(([, m]) => (m.steps || []).map(stepId).includes(id)).map(([mid]) => mid);
     ed.innerHTML = `
       <header><div><div class="eyebrow">Command · <span class="mono">${esc(id)}</span></div><h2>${state.editing ? '' : esc(d.title || id)}</h2></div>${editBar('command')}</header>
-      ${state.editing ? `
+      ${state.editing ? `${idField('command', id)}
         <div class="row">
           <div class="field"><label for="f-title">Title</label><input id="f-title" value="${esc(d.title || '')}"></div>
           <div class="field"><label for="f-gate">Gate</label><select id="f-gate">${GATES.map(g => `<option value="${g}" ${(d.gate || 'continue') === g ? 'selected' : ''}>${g}</option>`).join('')}</select><span class="hint" id="gate-help">${esc(GATE_HELP[d.gate || 'continue'])}</span></div>
@@ -231,7 +237,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
         <div class="danger-zone"><button class="danger" data-act="delete" ${usedBy.length ? 'disabled title="Remove it from its modes first"' : ''}>Delete command</button></div>` : `
         <p style="margin:0 0 12px"><span class="pill ${esc(d.gate || 'continue')}">${esc(d.gate || 'continue')}</span> <span class="status">${esc(GATE_HELP[d.gate || 'continue'] || '')}</span></p>
         <div class="instruction">${esc(d.instruction || '')}</div>
-        <p class="status" style="margin-top:14px">${usedBy.length ? `Used by: ${usedBy.map(m => `<code>${esc(m)}</code>`).join(', ')}` : 'Not part of any mode. Run it alone with <code>/kata run ' + esc(id) + '</code>.'}</p>`}`;
+        <p class="status" style="margin-top:14px">${usedBy.length ? `Used by: ${usedBy.map(m => `<code>${esc(m)}</code>`).join(', ')}. ` : 'Not part of any mode. '}Run it alone with <code>/kata run ${esc(id)}</code>.</p>`}`;
   }
   function libraryJSON() {
     const out = { version: 1, exportedAt: now(), commands: {}, modes: {} };
@@ -264,6 +270,38 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (!confirmInline(`Delete ${state.sel.kind} “${state.sel.id}”?`)) return;
     try { await state.db.doc(path).delete(); toast('Deleted'); select(state.sel.kind, null); } catch (_) { toast('Delete failed.'); }
   }
+  // Rename: write the new id, repoint the modes that list a renamed command, then remove the old id.
+  // The store has no transactions, so the order keeps every mode runnable if a write fails partway.
+  async function rename() {
+    syncDraftFromForm();
+    const kind = state.sel.kind, oldId = state.sel.id;
+    const coll = kind === 'mode' ? 'modes' : 'commands';
+    const map = kind === 'mode' ? state.modes : state.commands;
+    const newId = slug($('f-id').value);
+    if (!newId) return toast('Enter an identifier.');
+    if (newId === oldId) return toast('That is already its identifier.');
+    if (map.has(newId)) return toast('That identifier exists already.');
+    if (!confirmInline(`Rename “${oldId}” to “${newId}”?`)) return;
+    const doc = { ...state.draft, updatedAt: now() };
+    if (kind === 'mode') doc.steps = (doc.steps || []).map(stepId);
+    try {
+      await state.db.doc(`${coll}/${newId}`).set(doc);
+      if (kind === 'command') {
+        for (const [mid, m] of [...state.modes.entries()]) {
+          const steps = m.steps || [];
+          if (!steps.some(st => stepId(st) === oldId)) continue;
+          const next = steps.map(st => typeof st === 'string' ? (st === oldId ? newId : st) : (st && st.command === oldId ? { ...st, command: newId } : st));
+          await state.db.doc(`modes/${mid}`).update({ steps: next, updatedAt: now() });
+        }
+      }
+      await state.db.doc(`${coll}/${oldId}`).delete();
+      map.delete(oldId); map.set(newId, doc);
+      state.editing = false; state.draft = null;
+      toast(`Renamed to ${newId}`);
+      select(kind, newId);
+    } catch (_) { toast('Rename stopped partway. Check both identifiers in the list.'); render(); }
+  }
+
   // The viewer shows no confirm() dialogs; a second click within 4 s confirms.
   let pendingDelete = 0;
   function confirmInline(msg) { const t = Date.now(); if (t - pendingDelete < 4000) { pendingDelete = 0; return true; } pendingDelete = t; toast(msg + ' Click again to confirm.'); return false; }
@@ -299,6 +337,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
       case 'cancel': state.editing = false; state.draft = null; return render();
       case 'save': return save();
       case 'delete': return remove();
+      case 'rename': return rename();
       case 'create': return create(b.dataset.kind);
       case 'cancel-new': return render();
       case 'addstep': { syncDraftFromForm(); const v = $('f-add').value; if (v) state.draft.steps.push(v); return render(); }
