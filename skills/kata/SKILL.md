@@ -1,7 +1,7 @@
 ---
 name: kata
-description: Run a Kata mode (an ordered sequence of commands) or a single Kata command in this project, with live progress in the band, status line and pane. Use for /kata <mode> [args], /kata run <command> [args], /kata modes, /kata commands, /kata status, /kata stop.
-argument-hint: "<mode> [args] | run <command> [args] | modes | commands | status | stop"
+description: Run a Kata mode (an ordered sequence of commands) or a single Kata command in this project, with live progress in the band, status line and pane. Use for /kata followed by a mode id and its arguments, /kata run followed by a command id, /kata modes, /kata commands, /kata status, /kata stop.
+argument-hint: "MODE [args] | run COMMAND [args] | modes | commands | status | stop"
 ---
 
 # Kata runner

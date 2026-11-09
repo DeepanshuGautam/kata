@@ -1,7 +1,7 @@
 ---
 name: kata-edit
-description: Create or change Kata commands and modes from the terminal, writing to the configured claude.ai artifact or to the local library file. Use for /kata-edit command <id>, /kata-edit mode <id>, /kata-edit new command|mode <id>, /kata-edit delete command|mode <id>.
-argument-hint: "command <id> | mode <id> | new command|mode <id> | delete command|mode <id>"
+description: Create or change Kata commands and modes from the terminal, writing to the configured claude.ai artifact or to the local library file. Use for /kata-edit command or mode followed by an id, /kata-edit new command or new mode, and /kata-edit delete command or delete mode.
+argument-hint: "command ID | mode ID | new command|mode ID | delete command|mode ID"
 ---
 
 # Kata edit

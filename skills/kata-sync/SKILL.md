@@ -1,7 +1,7 @@
 ---
 name: kata-sync
 description: Pull the Kata library (commands and modes) from the configured claude.ai artifact into the local data file, showing what changed before replacing it. Use for /kata-sync, or when /kata cannot reach the artifact.
-argument-hint: "[--force] [--from <path-to-json>]"
+argument-hint: "[--force] [--from PATH.json]"
 ---
 
 # Kata sync
