@@ -5,7 +5,7 @@ import { CACHE, PR_LIBRARY, engine, newSeen, newWorld, running, setFile, setStat
 const BAND = {
   plugin: 'kata',
   component: 'AbovePrompt',
-  props: { hasSurvey: false, isWorking: false, maxRows: 4, bodyColumns: 120, scroll: { offset: 0, bodyRows: 4 }, view: {} },
+  props: { hasSurvey: false, isCollapsed: false, isWorking: false, maxRows: 4, bodyColumns: 120, scroll: { offset: 0, bodyRows: 4 }, view: {} },
 } as const
 
 const PANE = {
@@ -87,6 +87,20 @@ test('the band shows mode, branch, current step, its progress, the trail and the
     expect((await ui.find({ type: 'Text', text: /◆/ }))?.text).toBe('◆ 10 found · 5 fixed · 5 open')
     await ui.unmount()
   }
+})
+
+test('a collapsed band keeps to one row', async ($, on) => {
+  const world = newWorld()
+  setState(world, running())
+  engine(on, world, newSeen())
+  await start($)
+
+  // Through a variable, so the test reads the same on engines with and without the prop.
+  const collapsed = { ...BAND.props, isCollapsed: true }
+  const ui = await $.ui.mount({ ...BAND, props: collapsed, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: 'Fix every issue' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /◆/ })).toBeUndefined()
+  await ui.unmount()
 })
 
 test('a one-row band leaves the trail out', async ($, on) => {

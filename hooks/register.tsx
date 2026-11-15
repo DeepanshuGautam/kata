@@ -504,7 +504,9 @@ export const register: Register = (on, options) => {
     const step = state.steps[state.current]
     const p = stepProgress(state, step)
     const issues = issueCounts(state.issues)
-    const twoRows = e.props.maxRows >= 2
+    // Newer engines tell the band it is collapsed; older ones do not carry the prop.
+    const isCollapsed = (e.props as { isCollapsed?: boolean }).isCollapsed === true
+    const twoRows = e.props.maxRows >= 2 && !isCollapsed
     return (
       <Box flexDirection="column">
         <Box gap={1}>
