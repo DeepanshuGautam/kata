@@ -4,6 +4,9 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+### Fixed
+- `/kata-edit` names every reserved slash name, pins deletes to the version read, and when the page refuses a stale write it re-reads, shows what changed and asks before applying on top.
+
 ## [0.1.1] - 2026-11-15
 
 ### Changed
