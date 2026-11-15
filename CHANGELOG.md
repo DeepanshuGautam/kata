@@ -4,6 +4,10 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+### Fixed
+- The band keeps to one row when Claude Code reports it collapsed (`isCollapsed`, newer engines).
+- CI validates the library files with the 2020-12 JSON Schema draft and can be run by hand.
+
 ## [0.1.0] - 2026-11-15
 
 First public release.
