@@ -9,7 +9,7 @@ import type { KataState } from '../types'
 export const ROOT = '/proj'
 export const HOME = '/home/me'
 export const CACHE = `${HOME}/.claude/kata/library.json`
-export const STATE = `${ROOT}/.claude/kata/state.json`
+export const STATE = `${ROOT}/.kata/state.json`
 
 export type Command = { title: string; slash?: string; gate: string; instruction: string }
 export type Mode = { name: string; slash?: string; steps: string[] }
@@ -72,9 +72,9 @@ export const setFile = (world: World, path: string, text: string): void => {
 const lines = (docs: Record<string, unknown>) =>
   ['=== BEGIN ARTIFACT DB x ===', ...Object.entries(docs).map(([id, data]) => JSON.stringify({ id, data, version: 1 })), '=== END ARTIFACT DB x ==='].join('\n')
 
-export function engine(on: On, world: World, seen: Seen): MockClock {
+export function engine(on: On, world: World, seen: Seen, env: Record<string, string> = {}): MockClock {
   const clock = mock.clock(on)
-  mock.env(on, { HOME })
+  mock.env(on, { HOME, ...env })
   on('session.root', () => ({ value: ROOT }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('ui.status', (_, e) => {

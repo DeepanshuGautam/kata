@@ -192,15 +192,37 @@ test('steps, pauses and the end of a run are announced', async ($, on) => {
 
   // The skill writes the state file: review done, run paused at a confirm gate.
   setState(world, { ...base, current: 3, status: 'paused' })
-  await $.tool.call({ tool: 'Write', file_path: '/proj/.claude/kata/state.json', content: '{}' })
+  await $.tool.call({ tool: 'Write', file_path: '/proj/.kata/state.json', content: '{}' })
   expect(seen.toasts).toContain('✓ Full self-review · 10 issues found')
   expect(seen.notifications).toEqual(['Waiting for you after “Fix every issue”.'])
 
   setState(world, { ...base, status: 'done', steps: base.steps.map(s => ({ ...s, status: 'done' as const })), issues: base.issues?.map(i => ({ ...i, status: 'fixed' as const })) })
-  await $.tool.call({ tool: 'Write', file_path: '/proj/.claude/kata/state.json', content: '{}' })
+  await $.tool.call({ tool: 'Write', file_path: '/proj/.kata/state.json', content: '{}' })
   expect(seen.toasts).toContain('⛩ Kata PR implementation: done · 10/10 issues fixed')
   expect(seen.notifications).toContain('Run done · 10/10 issues fixed.')
   expect(seen.statuses[seen.statuses.length - 1]).toBeUndefined()
+})
+
+test('a state file written by anything, not only the Write tool, reaches the band within one tick', async ($, on) => {
+  const world = newWorld()
+  const seen = newSeen()
+  const clock = engine(on, world, seen)
+  await start($)
+  expect(seen.toasts).toEqual([])
+
+  // A shell, an editor or another session writes the file: no tool call reaches the mod.
+  setState(world, running())
+  await clock.advance(2000)
+  expect(seen.toasts).toEqual(['⛩ Kata PR implementation started · 5 steps'])
+  expect(seen.statuses.filter(Boolean).pop()).toMatch(/^⛩ kata pr · 4\/5 Fix every issue/)
+})
+
+test('the prompt section warns when the source is artifact but no URL is set', { options: { source: 'artifact', artifactUrl: '' } }, async ($, on) => {
+  engine(on, newWorld(), newSeen())
+  on('prompt.compose', () => ({ sections: [] }))
+  await start($)
+  const result = await $.prompt.compose({ model: 'm', promptModel: 'm', surfaces: ['terminal'], tools: [], outputStyle: null, traits: [] })
+  expect(result.sections.find(s => s.id === 'kata:config')?.text).toContain('warning: the library source is artifact but no artifact URL is set')
 })
 
 test('notify=false keeps toasts but sends no notification', { options: { notify: false } }, async ($, on) => {
@@ -210,7 +232,7 @@ test('notify=false keeps toasts but sends no notification', { options: { notify:
   engine(on, world, seen)
   await start($)
   setState(world, running({ status: 'paused' }))
-  await $.tool.call({ tool: 'Write', file_path: '/proj/.claude/kata/state.json', content: '{}' })
+  await $.tool.call({ tool: 'Write', file_path: '/proj/.kata/state.json', content: '{}' })
   expect(seen.notifications).toEqual([])
 })
 

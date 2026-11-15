@@ -4,6 +4,19 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-15
+
+### Changed
+- Run state moves to `<project>/.kata/state.json`, which ignores itself in git through `.kata/.gitignore`. Claude Code guards `.claude/` and `.git/` as sensitive, so writing state there asked for permission at every step.
+- The local library copy has one path for the skills and the mod: `~/.claude/kata/library.json`, or `$KATA_HOME/library.json` when `KATA_HOME` is set. The skills used to write to the plugin's data folder, which the mod could not see.
+- `/kata-sync` lists every difference, one line each (`+` added, `-` removed, `~` changed with the fields), and repeats the list in its final message.
+- `/kata-edit add example ID` means the mode when an example mode and command share the id; `add example command ID` copies the command alone.
+- The example acceptance command closes a tracked task when the project's CLAUDE.md says to: on acceptance, or on merge (the default).
+
+### Added
+- `KATA_HOME` moves the local library, for separate setups and for testing.
+- A warning, in the prompt section and from `/kata`, when the library source is the artifact but no URL is set, naming the fallback used.
+
 ### Fixed
 - The band keeps to one row when Claude Code reports it collapsed (`isCollapsed`, newer engines).
 - CI validates the library files with the 2020-12 JSON Schema draft and can be run by hand.
@@ -30,5 +43,6 @@ First public release.
 - README snapshots of the band and the pane (`docs/images/`).
 - Plugin tests for the guard, band, status line, toasts, notifications, pane, library sync and slash commands; plugin icon; CI workflow.
 
-[Unreleased]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.1.0...HEAD
+[Unreleased]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.1.1...HEAD
+[0.1.1]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.1.0...kata--v0.1.1
 [0.1.0]: https://github.com/DeepanshuGautam/kata/releases/tag/kata--v0.1.0

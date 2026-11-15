@@ -88,6 +88,15 @@ test('reserved and malformed slash names are not registered', async ($, on) => {
   expect(seen.registered.filter(n => !['kata-panel', 'kata-refresh'].includes(n))).toEqual([])
 })
 
+test('KATA_HOME moves the local library copy', async ($, on) => {
+  const world = newWorld()
+  setFile(world, '/elsewhere/kata/library.json', library({ review: REVIEW }))
+  const seen = newSeen()
+  engine(on, world, seen, { KATA_HOME: '/elsewhere/kata/' })
+  await start($)
+  expect(seen.registered).toContain('kata-review')
+})
+
 test('a fresh install has an empty library: only Kata\'s own commands are registered', async ($, on) => {
   const seen = newSeen()
   engine(on, newWorld(), seen)

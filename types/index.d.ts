@@ -30,7 +30,7 @@ export type KataStep = {
 
 export type KataLastCommand = { command: string; title: string; finishedAt: string; status: KataStepStatus }
 
-/** The run state file, `<project>/.claude/kata/state.json`: written by the /kata skill, read by the mod. */
+/** The run state file, `<project>/.kata/state.json`: written by the /kata skill, read by the mod. */
 export type KataState = {
   version: 1
   mode: string

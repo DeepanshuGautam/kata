@@ -12,7 +12,7 @@ You give the user a library of their own. Report each step in one line as you fi
 
 ## 1. Decide where the library lives
 
-- With `--local`: the library stays in the local data file only. Create `${CLAUDE_PLUGIN_DATA}/library.json` (or `~/.claude/kata/library.json` when `${CLAUDE_PLUGIN_DATA}` is empty) as `{ "version": 1, "commands": {}, "modes": {} }` unless that file exists, set the plugin's `source` to `local` (section 4), and go to section 5.
+- With `--local`: the library stays in the local data file only. Create `~/.claude/kata/library.json` (or `$KATA_HOME/library.json` when `KATA_HOME` is set) as `{ "version": 1, "commands": {}, "modes": {} }` unless that file exists, set the plugin's `source` to `local` (section 4), and go to section 5.
 - With an artifact URL in the arguments: the user already has a Kata Library page. Skip section 2 and use that URL.
 - Otherwise, when the `kata:config` section of your context already gives an artifact URL, tell the user Kata is already connected to that page and ask in plain text whether to keep it or create a new one. Wait for the answer.
 - When the `Artifact` and `ArtifactData` tools are not available in this session (load them with ToolSearch `select:Artifact,ArtifactData` when they are deferred), say that a Kata Library page needs a session signed in to claude.ai, and offer `--local` instead. Stop.

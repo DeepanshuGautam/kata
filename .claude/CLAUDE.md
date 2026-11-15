@@ -13,7 +13,7 @@ The design and task list are in the Obsidian vault GautamSystems: area **Kata**,
 - `types/index.d.ts` the state file shape (steps with `progress` and `activity`, run `issues`) and the `$.state` contract (`kata.run`, `kata.isBandHidden`, `kata.library`, `kata.branch`, `kata.minute`).
 - `library/default.json` the bundled library, empty. `library/examples.json` the steps library: the `pr` mode and its eight commands, the README showcase. `artifact/kata-library.html` the Kata Library page; its Steps library is embedded from `examples.json` by `node scripts/embed-examples.mjs` (CI checks it with `--check`).
 - `docs/images/` README snapshots of the band and pane.
-- Run state: `<project>/.claude/kata/state.json`, written by the skill, read by the mod. Never committed.
+- Run state: `<project>/.kata/state.json`, written by the skill, read by the mod. Never committed.
 
 ## Rules
 

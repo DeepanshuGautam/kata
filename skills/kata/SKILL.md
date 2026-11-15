@@ -14,10 +14,10 @@ Arguments: `$ARGUMENTS`
 
 The library has two collections: `modes` (`{ name, slash?, description, argsHint, steps: [commandId | { command, gate? }] }`) and `commands` (`{ title, slash?, gate, instruction }`). A `slash` is the slash command the Kata mod registers for that mode or command, such as `kata-review`; typing it runs `/kata <mode>` or `/kata run <command>`. Gates are `continue`, `confirm`, `stop-on-fail`. A library may hold any number of commands and modes, the user wrote them, and it may be empty: never assume any particular command or mode exists.
 
-Resolve it in this order and say in one line which source you used:
+Resolve it in this order and say in one line which source you used. When the configuration says `library source: artifact` but gives no artifact URL, or the `ArtifactData` tool is not available, say so in that line, name the source you fell back to, and point to `/kata-setup`:
 
 1. **Artifact** when the configuration section `kata:config` in your context says `library source: artifact` and gives an artifact URL, and the `ArtifactData` tool is available (load it with ToolSearch `select:ArtifactData` if it is deferred). Read both collections with `ArtifactData` `list` (`collection: "modes"` and `collection: "commands"`). Then write the result in the local format below to the data file, keeping every `slash`, whenever it differs from what the file holds. Later sessions use it offline, and the Kata mod reads it within two seconds to register slash commands for new or renamed commands and modes.
-2. **Local data file** `${CLAUDE_PLUGIN_DATA}/library.json` (when `${CLAUDE_PLUGIN_DATA}` is empty use `~/.claude/kata/library.json`).
+2. **Local file** `~/.claude/kata/library.json`, or `$KATA_HOME/library.json` when the `KATA_HOME` environment variable is set (check once with `printenv KATA_HOME`). This is the one path the skills and the Kata mod share: always read and write the local library there. Every mention of `~/.claude/kata/library.json` in the Kata skills means this path.
 3. **Bundled default** `${CLAUDE_PLUGIN_ROOT}/library/default.json`, which is empty. When the library you resolve is empty, say so in one line and point to `/kata-setup` (a Kata Library page), `/kata examples` (the steps library) and `/kata-edit new command`.
 
 Local format:
@@ -38,16 +38,16 @@ When you resume a run and a step's `command` id is no longer in the library, loo
 - `modes` → print a table of modes: id, how to run it (`/<slash>` or `/kata <id>`), name, number of steps, argument hint. Stop.
 - `commands` → print a table of commands: id, how to run it alone (`/<slash>` or `/kata run <id>`), title, gate, and the first sentence of the instruction. Stop.
 - `examples` → read the steps library `${CLAUDE_PLUGIN_ROOT}/library/examples.json`: example commands and modes people can copy into their own library. Print a table of its commands (id, title, gate, the first sentence of the instruction) and of its modes (id, name, steps). End with how to copy one: `/kata-edit add example ID` for a command or a mode (a mode brings its commands), or the Steps library on the Kata Library page. Examples are not part of the user's library and never run from here. Stop.
-- `status` → read `.claude/kata/state.json` in the project root and print the mode, status, current step, each step's status, progress and note, and the issue counts. Stop.
+- `status` → read `.kata/state.json` in the project root and print the mode, status, current step, each step's status, progress and note, and the issue counts. Stop.
 - `stop` → set the state file's `status` to `stopped`, `updatedAt` now, and print one line. Stop.
 - `run <command> [args]` → run that single command (section 4) with a one-step run whose `mode` is `run` and `modeName` is the command title.
 - `<mode> [args]` → run the whole mode. An unknown mode or command: list the available ids and stop.
 
-If `.claude/kata/state.json` exists with `status` `running` or `paused`, ask the user in plain text whether to **resume** from its current step or **restart**, and wait. Never use a form or multiple-choice widget for this.
+If `.kata/state.json` exists with `status` `running` or `paused`, ask the user in plain text whether to **resume** from its current step or **restart**, and wait. Never use a form or multiple-choice widget for this.
 
 ## 3. State file
 
-Path: `<project root>/.claude/kata/state.json`. Create the directory when missing and add the line `.claude/kata/` to `.git/info/exclude` once (never to the tracked `.gitignore` unless the user asks). Write the file with the Write tool so the mods pick up each change. Shape:
+Path: `<project root>/.kata/state.json` (outside `.claude/`, which Claude Code guards as sensitive). Create the directory when missing, with a file `.kata/.gitignore` holding the single line `*`, so git ignores the folder without touching `.git` or the tracked `.gitignore`. Write the file with the Write tool so the mods pick up each change. Shape:
 
 ```json
 { "version": 1, "mode": "pr", "modeName": "PR implementation", "args": "<args as typed>",

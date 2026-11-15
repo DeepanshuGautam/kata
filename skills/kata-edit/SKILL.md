@@ -8,7 +8,7 @@ argument-hint: "command ID | mode ID | new command|mode ID | add example ID | de
 
 Arguments: `$ARGUMENTS`
 
-The library source comes from the `kata:config` section of your context: `artifact` (write with the `ArtifactData` tool, loaded via ToolSearch `select:ArtifactData`) or `local` (edit `${CLAUDE_PLUGIN_DATA}/library.json`, or `~/.claude/kata/library.json` when the data directory is empty).
+The library source comes from the `kata:config` section of your context: `artifact` (write with the `ArtifactData` tool, loaded via ToolSearch `select:ArtifactData`) or `local` (edit `~/.claude/kata/library.json` (or `$KATA_HOME/library.json` when `KATA_HOME` is set), the path the Kata mod reads).
 
 Shapes: a command is `{ title, slash, gate, instruction, updatedAt }`, where `slash` is the slash command that runs it alone (lowercase letters, digits, `-` and `_`; unique; never `kata`, `kata-sync`, `kata-edit` or `kata-panel`; default `kata-<id>`); a mode is `{ name, slash, description, argsHint, steps: ["<commandId>"], updatedAt }`, its `slash` optional and following the same rules as a command's (names are unique across commands and modes). Gates: `continue` (go on), `confirm` (pause and ask the user before the next step), `stop-on-fail` (end the run when the step fails). Ids are lowercase `[a-z0-9._~-]`. The full format is `${CLAUDE_PLUGIN_ROOT}/schemas/library.schema.json`; check a document against it before writing.
 
@@ -23,5 +23,5 @@ Never write a command whose instruction asks for commit trailers, secrets in the
 
 `${CLAUDE_PLUGIN_ROOT}/library/examples.json` is the steps library: example commands and modes, such as a pull-request workflow, that people copy and adapt. It is not part of anyone's library.
 
-- `add example ID`: copy the example command with that id, or the example mode with that id together with every command it lists. An id already in the user's library is never overwritten: ask in plain text for a new id, or skip that item. Write as in step 3, then show what was added and the slash commands it brings.
+- `add example ID`: copy the example mode with that id together with every command it lists, or else the example command with that id. When an id names both, it means the mode, which brings the command along; `add example command ID` copies the command alone. An id already in the user's library is never overwritten: ask in plain text for a new id, or skip that item. Write as in step 3, then show what was added and the slash commands it brings.
 - `new command ID`: when the user asks for something close to an example, offer it in plain text as a starting point, and adapt its instruction to what they asked.

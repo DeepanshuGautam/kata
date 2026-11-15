@@ -4,13 +4,13 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { KataIssue, KataLibraryInfo, KataProgress, KataState, KataStep, KataStepStatus } from '../types'
 
 // ---------------------------------------------------------------------------------------------
-// Kata mod. It never runs a step: the /kata skill does, writing <project>/.claude/kata/state.json.
+// Kata mod. It never runs a step: the /kata skill does, writing <project>/.kata/state.json.
 // The mod mirrors that file into a band, the status line, a pane, toasts and notifications; keeps
 // the library's commands and modes registered as slash commands; and guards commit trailers.
 // ---------------------------------------------------------------------------------------------
 
 const PANE = 'kata'
-const STATE_FILE = '.claude/kata/state.json'
+const STATE_FILE = '.kata/state.json'
 const run = atom({ plugin: 'kata', key: 'run' } as const, null)
 const isBandHidden = atom({ plugin: 'kata', key: 'isBandHidden' } as const, false)
 const library = atom({ plugin: 'kata', key: 'library' } as const, null)
@@ -177,14 +177,10 @@ const registered = new Set<string>()
 let kataCommand: string | undefined
 let kataAliased = false
 
+/** The local library copy, one path for the skills and the mod: $KATA_HOME/library.json, else ~/.claude/kata/library.json. */
 async function cachePath($: EngineInterface): Promise<string | undefined> {
-  const data = await $.env.get('CLAUDE_PLUGIN_DATA').catch(() => undefined)
-  if (data) return `${data}/library.json`
-  const home = await $.env.get('HOME').catch(() => undefined)
-  return home ? `${home}/.claude/kata/library.json` : undefined
-}
-
-async function legacyCachePath($: EngineInterface): Promise<string | undefined> {
+  const kataHome = await $.env.get('KATA_HOME').catch(() => undefined)
+  if (kataHome) return `${kataHome.replace(/\/+$/, '')}/library.json`
   const home = await $.env.get('HOME').catch(() => undefined)
   return home ? `${home}/.claude/kata/library.json` : undefined
 }
@@ -274,11 +270,9 @@ async function markSynced($: EngineInterface): Promise<void> {
 /** Reads the newest local library (cache, else bundled) when it changed, and registers its slash commands. */
 async function refreshLibrary($: EngineInterface): Promise<void> {
   let newest: { path: string; mtime: number; source: KataLibraryInfo['source'] } | undefined
-  for (const path of [await cachePath($), await legacyCachePath($)]) {
-    if (!path) continue
-    const st = await $.fs.stat(path).catch(() => undefined)
-    if (st && st.kind === 'file' && (!newest || st.mtimeMs > newest.mtime)) newest = { path, mtime: st.mtimeMs, source: 'cache' }
-  }
+  const local = await cachePath($)
+  const st = local ? await $.fs.stat(local).catch(() => undefined) : undefined
+  if (local && st && st.kind === 'file') newest = { path: local, mtime: st.mtimeMs, source: 'cache' }
   if (!newest) {
     const path = `${$.plugin.root}/library/default.json`
     const st = await $.fs.stat(path).catch(() => undefined)
@@ -486,6 +480,9 @@ export const register: Register = (on, options) => {
       `- run state file: <project root>/${STATE_FILE}`,
       'The /kata, /kata-sync, /kata-edit and /kata-setup skills read these values; do not ask the user for them when they are set.',
     ]
+    if (source === 'artifact' && !artifactUrl) {
+      lines.push('- warning: the library source is artifact but no artifact URL is set; Kata falls back to the local file, else the bundled (empty) library. Say so when you run /kata, and point to /kata-setup.')
+    }
     if (info) {
       lines.push(`- library as the mod last read it (${info.source}): modes ${info.modes.map(m => m.id).join(', ') || 'none'}; commands ${info.commands.map(c => c.id).join(', ') || 'none'}`)
     }

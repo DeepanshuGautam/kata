@@ -70,7 +70,7 @@ Build your own the same way: a docs pass, a release, a migration, a bug triage. 
 | Source | When it is used |
 |---|---|
 | **Kata Library page** (claude.ai artifact) | When the library source is `artifact` and a page URL is set. `/kata-setup` makes one for you. Edit commands and modes there, reorder steps, rename, set slash names, export JSON. |
-| **Local file** `${CLAUDE_PLUGIN_DATA}/library.json` | The offline copy of the page, or your only library when the source is `local`. Edit it with `/kata-edit` or by hand. |
+| **Local file** `~/.claude/kata/library.json` (or `$KATA_HOME/library.json`) | The offline copy of the page, or your only library when the source is `local`. Edit it with `/kata-edit` or by hand. |
 | **Bundled** `library/default.json` | Empty: a fresh install, until either of the above exists. |
 
 The page also has a **Steps library**, where you add example commands and modes with one click, and an **About** view.
@@ -81,7 +81,7 @@ Share the page with your team, and everyone with the plugin runs the same steps.
 
 ## Watching a run
 
-The `/kata` skill runs the steps and writes `.claude/kata/state.json` in the project, which is excluded from git. The mod draws it:
+The `/kata` skill runs the steps and writes `.kata/state.json` in the project, which ignores itself in git. The mod draws it:
 
 - **Band above the prompt:** the mode, the branch, the current step with its progress bar, a trail of every step, and the issue counts. Press *hide* to hide it.
 - **Status line:** the same headline in one line.
