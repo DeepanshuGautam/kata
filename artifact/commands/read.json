@@ -1,7 +1,0 @@
-{
-  "title": "Read the plan",
-  "slash": "kata-read",
-  "gate": "continue",
-  "instruction": "Read, in this order, before writing any code: CLAUDE.md at the repository root; the implementation plan for this release (Spec/plans/<release>.md when the repo has it, otherwise the plan note the user named); the open tasks of the matching project in the Obsidian vault when a vault path is configured in CLAUDE.md; any acceptance criteria for the scope given in the arguments. Then write a scope statement into the Kata state file: the PR's goal in one sentence, the files you expect to touch, the acceptance criteria as a checklist, and what is explicitly out of scope. Print the scope statement to the user. Do not write code in this step.",
-  "updatedAt": "2026-11-09T00:00:00Z"
-}

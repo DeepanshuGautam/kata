@@ -1,7 +1,0 @@
-{
-  "title": "Fix every issue",
-  "slash": "kata-fix",
-  "gate": "confirm",
-  "instruction": "Fix every issue on the list. When an issue needs a product or design decision, ask the user in plain text (never a form or multiple-choice widget), wait for the answer, then continue. After fixing, run the review step once more on the new diff; repeat fix and review until the list is empty. Record the final empty list in the state file.",
-  "updatedAt": "2026-11-09T00:00:00Z"
-}

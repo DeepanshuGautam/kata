@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/DeepanshuGautam/kata/schemas/library.schema.json",
   "title": "Kata library",
-  "description": "Commands (single instructions Claude follows) and modes (ordered sequences of commands) for the Kata plugin. Version 1.",
+  "description": "Commands (single instructions Claude follows) and modes (ordered sequences of commands) for the Kata plugin. Any number of each. Version 1.",
   "type": "object",
   "required": [
     "version",
@@ -134,6 +134,9 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "slash": {
+          "$ref": "#/$defs/slash"
         }
       }
     },
@@ -145,10 +148,12 @@
           "kata",
           "kata-sync",
           "kata-edit",
-          "kata-panel"
+          "kata-setup",
+          "kata-panel",
+          "kata-refresh"
         ]
       },
-      "description": "The slash command that runs this one command directly, without the leading slash. The Kata mod registers it from the local library cache."
+      "description": "The slash command that runs this command or mode directly, without the leading slash. The Kata mod registers it from the library; names are unique across commands and modes."
     }
   }
 }

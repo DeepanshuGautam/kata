@@ -1,7 +1,0 @@
-{
-  "title": "Commit without trailers",
-  "slash": "kata-commit",
-  "gate": "continue",
-  "instruction": "Stage only the files in scope (never `git add -A` blindly; list what is staged). Commit with a Conventional Commits message: `type(scope): summary` under 72 characters, a blank line, then a body that says what changed and why. The message carries no trailers of any kind: no Co-Authored-By, no Generated-with, no Signed-off-by. The Kata hook blocks a commit that carries one; rewrite the message rather than bypassing the hook.",
-  "updatedAt": "2026-11-09T00:00:00Z"
-}

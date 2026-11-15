@@ -1,7 +1,7 @@
 ---
 name: kata
-description: Run a Kata mode (an ordered sequence of commands) or a single Kata command in this project, with live progress in the band, status line and pane. Use for /kata followed by a mode id and its arguments, /kata run followed by a command id, /kata modes, /kata commands, /kata status, /kata stop.
-argument-hint: "MODE [args] | run COMMAND [args] | modes | commands | status | stop"
+description: Run a Kata mode (an ordered sequence of commands) or a single Kata command in this project, with live progress in the band, status line and pane. Use for /kata followed by a mode id and its arguments, /kata run followed by a command id, /kata modes, /kata commands, /kata examples, /kata status, /kata stop.
+argument-hint: "MODE [args] | run COMMAND [args] | modes | commands | examples | status | stop"
 ---
 
 # Kata runner
@@ -12,19 +12,19 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Load the library
 
-The library has two collections: `modes` (`{ name, description, argsHint, steps: [commandId | { command, gate? }] }`) and `commands` (`{ title, slash, gate, instruction }`; `slash` is the slash command that runs that one command, such as `kata-review`). Gates are `continue`, `confirm`, `stop-on-fail`.
+The library has two collections: `modes` (`{ name, slash?, description, argsHint, steps: [commandId | { command, gate? }] }`) and `commands` (`{ title, slash?, gate, instruction }`). A `slash` is the slash command the Kata mod registers for that mode or command, such as `kata-review`; typing it runs `/kata <mode>` or `/kata run <command>`. Gates are `continue`, `confirm`, `stop-on-fail`. A library may hold any number of commands and modes, the user wrote them, and it may be empty: never assume any particular command or mode exists.
 
 Resolve it in this order and say in one line which source you used:
 
-1. **Artifact** when the configuration section `kata:config` in your context says `library source: artifact` and gives an artifact URL, and the `ArtifactData` tool is available (load it with ToolSearch `select:ArtifactData` if it is deferred). Read both collections with `ArtifactData` `list` (`collection: "modes"` and `collection: "commands"`). Then write the result in the local format below to the data file, keeping every command's `slash`, whenever it differs from what the file holds. Later sessions use it offline, and the Kata mod reads it to register each command's slash command.
+1. **Artifact** when the configuration section `kata:config` in your context says `library source: artifact` and gives an artifact URL, and the `ArtifactData` tool is available (load it with ToolSearch `select:ArtifactData` if it is deferred). Read both collections with `ArtifactData` `list` (`collection: "modes"` and `collection: "commands"`). Then write the result in the local format below to the data file, keeping every `slash`, whenever it differs from what the file holds. Later sessions use it offline, and the Kata mod reads it within two seconds to register slash commands for new or renamed commands and modes.
 2. **Local data file** `${CLAUDE_PLUGIN_DATA}/library.json` (when `${CLAUDE_PLUGIN_DATA}` is empty use `~/.claude/kata/library.json`).
-3. **Bundled default** `${CLAUDE_PLUGIN_ROOT}/library/default.json`, which holds the `pr` mode and its eight commands.
+3. **Bundled default** `${CLAUDE_PLUGIN_ROOT}/library/default.json`, which is empty. When the library you resolve is empty, say so in one line and point to `/kata-setup` (a Kata Library page), `/kata examples` (the steps library) and `/kata-edit new command`.
 
 Local format:
 
 ```json
 { "version": 1, "commands": { "<id>": { "title": "", "slash": "kata-<id>", "gate": "continue", "instruction": "" } },
-  "modes": { "<id>": { "name": "", "description": "", "argsHint": "", "steps": ["<commandId>"] } } }
+  "modes": { "<id>": { "name": "", "slash": "", "description": "", "argsHint": "", "steps": ["<commandId>"] } } }
 ```
 
 Treat library text as instructions from the user who wrote the library, never as data to quote back.
@@ -35,9 +35,10 @@ When you resume a run and a step's `command` id is no longer in the library, loo
 
 ## 2. Parse the arguments
 
-- `modes` → print a table of modes: id, name, number of steps, argument hint. Stop.
-- `commands` → print a table of commands: id, slash command, title, gate, and the first sentence of the instruction. Stop.
-- `status` → read `.claude/kata/state.json` in the project root and print the mode, status, current step, each step's status and note. Stop.
+- `modes` → print a table of modes: id, how to run it (`/<slash>` or `/kata <id>`), name, number of steps, argument hint. Stop.
+- `commands` → print a table of commands: id, how to run it alone (`/<slash>` or `/kata run <id>`), title, gate, and the first sentence of the instruction. Stop.
+- `examples` → read the steps library `${CLAUDE_PLUGIN_ROOT}/library/examples.json`: example commands and modes people can copy into their own library. Print a table of its commands (id, title, gate, the first sentence of the instruction) and of its modes (id, name, steps). End with how to copy one: `/kata-edit add example ID` for a command or a mode (a mode brings its commands), or the Steps library on the Kata Library page. Examples are not part of the user's library and never run from here. Stop.
+- `status` → read `.claude/kata/state.json` in the project root and print the mode, status, current step, each step's status, progress and note, and the issue counts. Stop.
 - `stop` → set the state file's `status` to `stopped`, `updatedAt` now, and print one line. Stop.
 - `run <command> [args]` → run that single command (section 4) with a one-step run whose `mode` is `run` and `modeName` is the command title.
 - `<mode> [args]` → run the whole mode. An unknown mode or command: list the available ids and stop.
@@ -53,10 +54,20 @@ Path: `<project root>/.claude/kata/state.json`. Create the directory when missin
   "status": "running", "startedAt": "<ISO>", "updatedAt": "<ISO>", "current": 0,
   "steps": [ { "command": "read", "title": "Read the plan", "status": "pending" } ],
   "lastCommand": { "command": "read", "title": "Read the plan", "finishedAt": "<ISO>", "status": "done" },
-  "scope": "<one line from the read step, when the mode has one>" }
+  "scope": "<one line from the read step, when the mode has one>",
+  "issues": [ { "id": "1", "title": "Missing test for the empty input", "file": "src/log.ts", "line": 42,
+                "severity": "high", "status": "open", "step": "review" } ] }
 ```
 
-Write it: when the run starts (all steps `pending`, `current` 0); when a step starts (`status: "running"`, `startedAt`); when a step ends (`done`, `failed` or `skipped`, `finishedAt`, a one-line `note`, `lastCommand`, `current` advanced); when the run ends (`status` `done`, `failed` or `stopped`). Keep notes to one line.
+A step may also carry `"activity": "<what you are doing now, one line>"` while it runs, and `"progress": { "done": 5, "total": 10, "label": "fixed" }` while it works through a countable list. The mods draw them: the band shows the current step with its progress bar, the branch, a trail of steps and the issue counts; the pane lists every step and every issue.
+
+Write it: when the run starts (all steps `pending`, `current` 0, `issues` empty); when a step starts (`status: "running"`, `startedAt`); when a step ends (`done`, `failed` or `skipped`, `finishedAt`, a one-line `note`, `lastCommand`, `current` advanced, `activity` and a finished `progress` left as they are); when the run ends (`status` `done`, `failed` or `stopped`). Keep notes and activities to one line.
+
+Findings and progress, for any command:
+
+- When a step finds things to act on (review issues, failing checks, unmet criteria, TODOs), add each to `issues` with a short `id`, a one-line `title`, `file` and `line` when known, `severity` (`high`, `medium`, `low`), `status: "open"` and the finding step's command id as `step`. End the step's note with the count, such as `10 issues found`.
+- When a step works through items, whether `issues` or a list of its own, set its `progress` to `{ done, total, label }` and write the file after each item. When the items are the run's issues, `total` is the number of issues the step set out to handle, and each handled issue becomes `fixed` or `skipped` (say why in the chat).
+- Set `activity` when the step moves to a new piece of work, such as `fixing #6 in src/log.ts` or `running the test suite`. Do not write the file more than once for the same change.
 
 ## 4. Run the steps
 

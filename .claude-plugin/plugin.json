@@ -2,19 +2,33 @@
   "name": "kata",
   "displayName": "Kata",
   "version": "0.1.0",
-  "description": "Practised sequences for Claude Code: define commands, chain them into modes, run a whole mode or a single command from the terminal, and watch the run in a band, status line and pane.",
-  "author": { "name": "Deepanshu Gautam", "url": "https://github.com/DeepanshuGautam" },
+  "description": "Practised sequences for Claude Code: define your own commands, chain them into modes, run a whole mode or a single step from the terminal with its own slash command, and watch the run live: current step, issues found and fixed, branch and progress.",
+  "author": {
+    "name": "Deepanshu Gautam",
+    "url": "https://github.com/DeepanshuGautam"
+  },
   "homepage": "https://github.com/DeepanshuGautam/kata",
   "repository": "https://github.com/DeepanshuGautam/kata",
   "license": "MIT",
-  "keywords": ["workflow", "pull-request", "automation", "sequence", "modes", "commands", "mods"],
+  "keywords": [
+    "workflow",
+    "pull-request",
+    "automation",
+    "sequence",
+    "modes",
+    "commands",
+    "mods"
+  ],
   "types": "./types/index.d.ts",
   "userConfig": {
     "source": {
       "type": "string",
       "title": "Library source",
       "description": "Where /kata reads commands and modes: a claude.ai artifact (the Kata Library page) or the local library file in the plugin's data directory.",
-      "options": ["artifact", "local"],
+      "options": [
+        "artifact",
+        "local"
+      ],
       "default": "artifact"
     },
     "artifactUrl": {
@@ -27,13 +41,23 @@
       "type": "string",
       "title": "Block commit trailers",
       "description": "Refuse git commits whose message carries Co-Authored-By, Generated-with or Signed-off-by lines: during a Kata run, always, or never.",
-      "options": ["during-kata", "always", "never"],
+      "options": [
+        "during-kata",
+        "always",
+        "never"
+      ],
       "default": "during-kata"
     },
     "showBand": {
       "type": "boolean",
       "title": "Show the run band above the prompt",
       "description": "Draw the current mode, step and last command in a band above the prompt while a run is active.",
+      "default": true
+    },
+    "notify": {
+      "type": "boolean",
+      "title": "Notify when a run waits or ends",
+      "description": "Send a native notification when a run pauses for your go-ahead and when it ends, so you can step away while it works.",
       "default": true
     }
   }

@@ -1,7 +1,0 @@
-{
-  "title": "Open the pull request",
-  "slash": "kata-pr",
-  "gate": "continue",
-  "instruction": "Push the branch and open the pull request with `gh pr create`. Title: the commit summary. Body, in this order: `## Summary` with three to six bullets of what changed; `## Description` with why the change is made, the design decisions taken, and what a reviewer should read first; `## Testing` with the commands run and their results; `## Checklist` with each acceptance criterion as a ticked or unticked box. No attribution footer or generated-by line. Print the PR URL, then mark the Kata run finished in the state file.",
-  "updatedAt": "2026-11-09T00:00:00Z"
-}

@@ -16,11 +16,13 @@ jobs:
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
       - name: Validate plugin and marketplace
-        # Not --strict: the root CLAUDE.md is a contributor note, which strict mode flags as unloaded plugin context.
-        run: claude plugin validate .
+        run: claude plugin validate . --strict
       - name: Validate library files against the schema
         run: |
           npm install -g ajv-cli ajv-formats
           ajv validate -c ajv-formats -s schemas/library.schema.json -d library/default.json
+          ajv validate -c ajv-formats -s schemas/library.schema.json -d library/examples.json
+      - name: Steps library embedded in the Kata Library page
+        run: node scripts/embed-examples.mjs --check
       - name: Plugin tests
         run: claude plugin test .

@@ -1,0 +1,33 @@
+# Kata — Claude Code plugin
+
+Kata lets a user define **commands** (single instructions Claude follows), chain them into **modes** (ordered sequences), run a whole mode or one command from the terminal, and watch the run through mods (band above the prompt, status line, pane). The library of commands and modes lives in a claude.ai artifact (the *Kata Library* page, `artifact/kata-library.html`) or in a local JSON file; `library/default.json` is the bundled fallback, empty; `library/examples.json` is the steps library (the `pr` workflow) people copy from.
+
+The design and task list are in the Obsidian vault GautamSystems: area **Kata**, project **Kata 0.1 — Plugin, library and mods**, note **Kata Implementation Plan** (`~/Library/Mobile Documents/iCloud~md~obsidian/Documents/GautamSystems/Databases/Others/Notes/`). Read the plan first; mark a vault task Done when its work is merged.
+
+## Layout
+
+- `.claude-plugin/plugin.json` manifest, `userConfig` (source, artifactUrl, blockTrailers, showBand, notify); `marketplace.json` makes this repo its own marketplace (`kata-dojo`).
+- `skills/kata/SKILL.md` runner (`/kata <mode> [args]`, `run <command>`, `modes`, `commands`, `status`, `stop`); `skills/kata-setup` (publish, seed and connect a Kata Library page), `skills/kata-sync`, `skills/kata-edit`.
+- `hooks/hooks.json` + `hooks/register.tsx` the mod: state-file mirror, library sync (ArtifactData, local copy, bundled) and slash commands for every command and mode with a `slash`, branch, commit-trailer guard, `kata:config` prompt section, band, status line, pane, toasts and notifications, `/kata-panel`, `/kata-refresh`.
+- `hooks/*.test.tsx` the tests, on the stand-in engine in `hooks/engine.testkit.ts`.
+- `types/index.d.ts` the state file shape (steps with `progress` and `activity`, run `issues`) and the `$.state` contract (`kata.run`, `kata.isBandHidden`, `kata.library`, `kata.branch`, `kata.minute`).
+- `library/default.json` the bundled library, empty. `library/examples.json` the steps library: the `pr` mode and its eight commands, the README showcase. `artifact/kata-library.html` the Kata Library page; its Steps library is embedded from `examples.json` by `node scripts/embed-examples.mjs` (CI checks it with `--check`).
+- `docs/images/` README snapshots of the band and pane.
+- Run state: `<project>/.claude/kata/state.json`, written by the skill, read by the mod. Never committed.
+
+## Rules
+
+- Load the `plugin-authoring` skill before touching `hooks/register.tsx` or `types/`; the engine API is in the types it lays down, not in memory. `refresh` and any function that receives `$` must be a top-level function declaration.
+- `claude plugin validate .` must pass before a commit. Type-check with `tsc -p .` once `.claude-plugin/types/` exists (the engine writes it when the plugin loads).
+- Tests are `hooks/*.test.tsx`, run with `claude plugin test .`.
+- Skill text is written for Claude in the second person, one procedure per section, plain text questions to the user (never AskUserQuestion), state file updates at every step boundary.
+- Commits: Conventional Commits, no trailers of any kind.
+- Releases: bump `version` in `plugin.json`, add a CHANGELOG section, tag with `claude plugin tag .` (`kata--v<version>`). The repository is public; the plugin directory submission is a separate, manual step.
+- Secrets: none in this repo. The plugin reads settings through `userConfig`.
+
+## Try it
+
+```
+claude --plugin-dir ~/development/kata          # in a sandbox repo
+/kata modes · /kata run review · /kata pr "toy change" · /kata-panel
+```

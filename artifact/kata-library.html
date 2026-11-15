@@ -79,6 +79,23 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
 .usage code{background:var(--soft);padding:1px 5px;border-radius:4px}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 .danger-zone{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+.about{max-width:68ch}
+.about h2{font-size:22px;margin-bottom:6px}
+.about h3{font-size:15px;margin:22px 0 6px}
+.about p,.about li{line-height:1.6}
+.about ul{padding-left:20px;margin:6px 0}
+.about .lede{color:var(--muted);font-size:16px;margin:0 0 8px}
+.about pre{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;overflow-x:auto}
+.about .author{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--bg);margin-top:8px}
+.about .author .mark{font-size:26px;line-height:1}
+.about a{color:var(--accent)}
+.examples .ex{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;background:var(--bg);margin:0 0 10px}
+.examples .ex header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:0 0 6px;flex-wrap:wrap}
+.examples .ex .t{font-weight:600}
+.examples .ex .excerpt{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.examples .ex details summary{cursor:pointer;font-size:13px;color:var(--muted);margin-top:6px}
+.examples .ex details .instruction{margin-top:8px}
+.examples h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:var(--radius);font-size:13px;opacity:0;transition:opacity .2s}
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
@@ -88,10 +105,12 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
   <div>
     <div class="eyebrow">Kata · Claude Code plugin</div>
     <h1>Kata Library</h1>
-    <p>Commands are single instructions Claude follows. Modes are ordered sequences of commands. The <code>/kata</code> skill reads this library at run time.</p>
+    <p>Commands are single instructions Claude follows. Modes are ordered sequences of commands. Every Claude Code session with the Kata plugin reads this library, and each command or mode can have its own slash command.</p>
   </div>
   <div class="toolbar">
     <span id="status" class="status">Connecting…</span>
+    <button id="btn-examples" class="plain">Steps library</button>
+    <button id="btn-about" class="plain">About</button>
     <button id="btn-export" class="plain">Export JSON</button>
   </div>
 </header>
@@ -106,7 +125,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
       <h2>Commands <button id="btn-new-cmd" hidden>+ New</button></h2>
       <div id="commands" class="items"><div class="empty">No commands yet.</div></div>
     </section>
-    <p class="usage">Run a whole mode with <code>/kata pr &lt;scope&gt;</code>, one command with <code>/kata run review</code>, list with <code>/kata modes</code>. Pull changes into a terminal that cannot reach this page with <code>/kata-sync</code>.</p>
+    <p class="usage">Run a mode with <code>/kata &lt;mode&gt; [args]</code> or its own slash command, one command with <code>/kata run &lt;command&gt;</code> or its slash command, list with <code>/kata modes</code>. Pull changes into a terminal that cannot reach this page with <code>/kata-sync</code>.</p>
   </nav>
 
   <main id="editor" class="editor" aria-live="polite">
@@ -126,8 +145,18 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
+  // The steps library: example commands and modes to copy into a library. Embedded from
+  // library/examples.json by scripts/embed-examples.mjs; never part of anyone's library until copied.
+  const EXAMPLES = /*EXAMPLES:BEGIN*/{"commands":{"read":{"title":"Read the plan","slash":"kata-read","gate":"continue","instruction":"Read, in this order, before writing any code: CLAUDE.md at the repository root; the implementation plan for this release (Spec/plans/\u003crelease>.md when the repo has it, otherwise the plan note the user named); the open tasks of the matching project in the Obsidian vault when a vault path is configured in CLAUDE.md; any acceptance criteria for the scope given in the arguments. Then write a scope statement into the Kata state file: the PR's goal in one sentence, the files you expect to touch, the acceptance criteria as a checklist, and what is explicitly out of scope. Print the scope statement to the user. Do not write code in this step."},"implement":{"title":"Implement the scope","slash":"kata-implement","gate":"continue","instruction":"Implement only what the scope statement lists, following the architecture rules in CLAUDE.md and the plan's file layout. Add or update tests alongside the code. Do not add a dependency, change a public contract, or touch files outside the scope without asking the user in plain text first. Do not commit in this step."},"review":{"title":"Full self-review","slash":"kata-review","gate":"continue","instruction":"Review the whole change yourself: run git diff against the base branch and read every touched file in full. Do not invoke any review skill, slash command or subagent for this. Produce a numbered issue list covering correctness, missing or weak tests, architecture-rule violations (dependency direction, banned imports, logging rules), naming and API consistency, leftover debug code or TODOs, and documentation or localisation gaps. Each issue names the file and line, a severity (high, medium or low) and what to change. Record every issue in the Kata state file's issues list with status open, print the list, and end the step's note with the count. An empty list is a valid result only after you have read every touched file."},"fix":{"title":"Fix every issue","slash":"kata-fix","gate":"confirm","instruction":"Fix every open issue in the Kata state file's issues list, one at a time. Before each, set the step's activity to the issue you are on; after each, mark it fixed (or skipped with the reason in the chat) and update the step's progress to fixed out of the total. When an issue needs a product or design decision, ask the user in plain text (never a form or multiple-choice widget), wait for the answer, then continue. After fixing, run the review step once more on the new diff and add anything new it finds; repeat fix and review until no issue is open."},"verify":{"title":"Lint, tests, architecture check","slash":"kata-verify","gate":"stop-on-fail","instruction":"Run the project's checks. With a mise.toml present run `mise run lint`, `mise run test` and `mise run arch:check` (skip a task that does not exist and say so). Without mise, run the equivalents named in CLAUDE.md or the project's standard tooling. Keep the step's activity on the check that is running and its progress at checks passed out of checks run. Add each failure you cannot fix at once to the issues list. Fix failures and rerun until everything passes. Do not continue to the next step while any check fails; if a failure cannot be fixed inside the scope, stop and report it to the user with the output."},"commit":{"title":"Commit without trailers","slash":"kata-commit","gate":"continue","instruction":"Stage only the files in scope (never `git add -A` blindly; list what is staged). Commit with a Conventional Commits message: `type(scope): summary` under 72 characters, a blank line, then a body that says what changed and why. The message carries no trailers of any kind: no Co-Authored-By, no Generated-with, no Signed-off-by. The Kata hook blocks a commit that carries one; rewrite the message rather than bypassing the hook."},"acceptance":{"title":"Acceptance criteria and TODOs","slash":"kata-acceptance","gate":"continue","instruction":"Compare the result with the scope statement from the read step. For each acceptance criterion write met or not met with the evidence (file, test name, command output), keeping the step's progress at criteria met out of the total. List any TODO or task item from the plan that this PR was meant to close and whether it is closed. If anything is not met, add it to the issues list and return to the implement step for that item, then run the following steps again. When a vault path is configured, set the matching vault task's Status to Done. Record the table in the state file."},"pr":{"title":"Open the pull request","slash":"kata-pr","gate":"continue","instruction":"Push the branch and open the pull request with `gh pr create`. Title: the commit summary. Body, in this order: `## Summary` with three to six bullets of what changed; `## Description` with why the change is made, the design decisions taken, and what a reviewer should read first; `## Testing` with the commands run and their results; `## Checklist` with each acceptance criterion as a ticked or unticked box. No attribution footer or generated-by line. Print the PR URL, then mark the Kata run finished in the state file."}},"modes":{"pr":{"name":"PR implementation","description":"Read the plan, implement one PR's scope, self-review, fix, verify, commit without trailers, check acceptance, open an itemised PR.","argsHint":"\u003crelease or plan> \u003cPR scope>","steps":["read","implement","review","fix","verify","commit","acceptance","pr"]}}}/*EXAMPLES:END*/;
   const GATES = ['continue', 'confirm', 'stop-on-fail'];
-  const RESERVED_SLASH = ['kata', 'kata-sync', 'kata-edit', 'kata-panel'];
+  const RESERVED_SLASH = ['kata', 'kata-sync', 'kata-edit', 'kata-setup', 'kata-panel', 'kata-refresh'];
+  const SLASH_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+  // A slash name is unique across commands and modes: the plugin registers one slash command per name.
+  const slashOwner = (name, self) => {
+    for (const [id, c] of state.commands) if (c.slash === name && !(self.kind === 'command' && self.id === id)) return `command ${id}`;
+    for (const [id, m] of state.modes) if (m.slash === name && !(self.kind === 'mode' && self.id === id)) return `mode ${id}`;
+    return null;
+  };
   const GATE_HELP = {
     'continue': 'Go straight to the next command.',
     'confirm': 'Pause after this command and wait for the user before the next one.',
@@ -146,11 +175,14 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
 
   // ----- selection & hash -----
   const select = (kind, id) => {
-    state.sel = id ? { kind, id } : null; state.editing = false; state.draft = null;
-    try { history.replaceState(null, '', id ? `#${kind === 'mode' ? 'mode' : 'cmd'}.${id}` : location.pathname); } catch (_) {}
+    const page = kind === 'about' || kind === 'examples';
+    state.sel = page ? { kind, id: kind } : id ? { kind, id } : null; state.editing = false; state.draft = null;
+    const hash = page ? `#${kind}` : id ? `#${kind === 'mode' ? 'mode' : 'cmd'}.${id}` : location.pathname;
+    try { history.replaceState(null, '', hash); } catch (_) {}
     render();
   };
   const readHash = () => {
+    if (location.hash === '#about' || location.hash === '#examples') { const kind = location.hash.slice(1); state.sel = { kind, id: kind }; return; }
     const m = /^#(mode|cmd)\.([A-Za-z0-9._~-]+)$/.exec(location.hash || '');
     if (m) state.sel = { kind: m[1] === 'mode' ? 'mode' : 'command', id: m[2] };
   };
@@ -169,7 +201,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (!ids.length) { el.innerHTML = `<div class="empty">${state.loaded[elId] ? 'None yet.' : 'Loading…'}</div>`; return; }
     el.innerHTML = ids.map(id => {
       const d = map.get(id); const active = state.sel && state.sel.kind === kind && state.sel.id === id;
-      const count = kind === 'mode' ? `${(d.steps || []).length} steps` : (d.slash ? `/${d.slash}` : (d.gate || 'continue'));
+      const count = kind === 'mode' ? (d.slash ? `/${d.slash} · ${(d.steps || []).length}` : `${(d.steps || []).length} steps`) : (d.slash ? `/${d.slash}` : (d.gate || 'continue'));
       const label = kind === 'mode' ? esc(d.name || id) : esc(d.title || id);
       return `<button class="item${active ? ' active' : ''}" data-kind="${kind}" data-id="${esc(id)}"><span class="name">${label} <span class="id mono">${esc(id)}</span></span><span class="count">${esc(count)}</span></button>`;
     }).join('');
@@ -178,9 +210,11 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     const ed = $('editor');
     if (!state.sel) {
       ed.innerHTML = `<header><div><div class="eyebrow">Nothing selected</div><h2>Pick a mode or a command</h2></div></header>
-        <p class="status">${state.modes.size || state.commands.size ? 'Select an item on the left to read or edit it.' : 'The library is empty. Claude seeds the default <em>PR implementation</em> mode after the first publish, or add a command with “+ New”.'}</p>`;
+        <p class="status">${state.modes.size || state.commands.size ? 'Select an item on the left to read or edit it. New here? Read <a href="#about" data-about>About</a>.' : 'Your library is empty. Add a command with “+ New”, or start from the <a href="#examples">Steps library</a>: example commands and a pull-request workflow to copy and adapt.'}</p>`;
       return;
     }
+    if (state.sel.kind === 'about') { renderAbout(ed); return; }
+    if (state.sel.kind === 'examples') { renderExamples(ed); return; }
     const map = state.sel.kind === 'mode' ? state.modes : state.commands;
     const doc = map.get(state.sel.id);
     if (!doc) { ed.innerHTML = `<header><div><div class="eyebrow">${state.sel.kind}</div><h2>${esc(state.sel.id)}</h2></div></header><p class="status">This item no longer exists.</p>`; return; }
@@ -216,9 +250,10 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
           <div class="field"><label for="f-name">Name</label><input id="f-name" value="${esc(d.name || '')}"></div>
           <div class="field"><label for="f-args">Argument hint</label><input id="f-args" value="${esc(d.argsHint || '')}" placeholder="&lt;release&gt; &lt;PR scope&gt;"></div>
         </div>
-        <div class="field"><label for="f-desc">Description</label><input id="f-desc" value="${esc(d.description || '')}"></div>` : `
+        <div class="field"><label for="f-desc">Description</label><input id="f-desc" value="${esc(d.description || '')}"></div>
+        <div class="field"><label for="f-mslash">Slash command (optional)</label><input id="f-mslash" value="${esc(d.slash || '')}" placeholder="for example ship" spellcheck="false"><span class="hint">Type <code>/${esc(d.slash || '…')}</code> in Claude Code to run this whole mode. Leave empty to run it as <code>/kata ${esc(id)}</code>.</span></div>` : `
         <p style="margin:0 0 14px;color:var(--muted)">${esc(d.description || '')}</p>
-        ${d.argsHint ? `<p class="status" style="margin:0 0 14px">Usage: <code>/kata ${esc(id)} ${esc(d.argsHint)}</code></p>` : ''}`}
+        <p class="status" style="margin:0 0 14px">Run: <code>/${esc(d.slash || 'kata ' + id)}${d.argsHint ? ' ' + esc(d.argsHint) : ''}</code></p>`}
       <div class="eyebrow" style="margin-bottom:8px">Sequence</div>
       <ol class="steps">${stepRows || '<li style="grid-template-columns:1fr"><span class="status">No commands in this mode yet.</span></li>'}</ol>
       ${state.editing ? `<div class="addstep"><select id="f-add">${addable.map(c => `<option value="${esc(c)}">${esc(state.commands.get(c).title || c)} (${esc(c)})</option>`).join('')}</select><button data-act="addstep" ${addable.length ? '' : 'disabled'}>Add command</button></div>
@@ -241,10 +276,85 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
         <div class="instruction">${esc(d.instruction || '')}</div>
         <p class="status" style="margin-top:14px">${usedBy.length ? `Used by: ${usedBy.map(m => `<code>${esc(m)}</code>`).join(', ')}. ` : 'Not part of any mode. '}Run it alone with <code>/kata run ${esc(id)}</code>.</p>`}`;
   }
+  function renderAbout(ed) {
+    const modes = state.modes.size, commands = state.commands.size;
+    ed.innerHTML = `
+      <article class="about">
+        <div class="eyebrow">About</div>
+        <h2>Kata</h2>
+        <p class="lede">Practised sequences for Claude Code.</p>
+        <p>In martial arts a <em>kata</em> is a sequence of moves you drill until it runs on its own. This plugin does the same for the work you repeat with Claude: write each step once as a <strong>command</strong>, chain commands into <strong>modes</strong>, and run them from any terminal session with one slash command, a whole mode or a single step.</p>
+
+        <h3>Why it exists</h3>
+        <p>Shipping a change with Claude is the same routine every time: read the plan, implement, review, fix what the review found, run the checks, commit cleanly, check the acceptance criteria, open the pull request. Typing that routine into every session is slow and drifts: a step gets skipped, a review gets shallow, a commit picks up a trailer. Kata keeps the routine in one place you edit, so every session runs the same steps and you can watch where it is.</p>
+
+        <h3>What you can do with it</h3>
+        <ul>
+          <li><strong>Run a whole mode</strong>, such as the pull-request workflow in the <a href="#examples">Steps library</a>: read, implement, self-review, fix, verify, commit, acceptance, pull request.</li>
+          <li><strong>Run one step on its own</strong> with its slash command, such as <code>/kata-review</code> before you push.</li>
+          <li><strong>Write your own</strong>: any number of commands and modes, for docs, releases, migrations, triage or anything you repeat. Each can have its own slash command.</li>
+          <li><strong>Watch the run</strong>: a band above the prompt with the current step, its progress (issues fixed out of found), the branch and a trail of steps; a pane with every step and issue; a notification when a run waits for you.</li>
+          <li><strong>Share a library</strong> with your team: share this page, and everyone with the plugin runs the same steps. Only editors can change it.</li>
+        </ul>
+
+        <h3>How this page and your terminal stay in step</h3>
+        <p>Edits here reach every Claude Code session with the plugin: when a session starts, every ten minutes, on <code>/kata-refresh</code>, and at every <code>/kata</code> call. A renamed or new slash command is registered within seconds of that, with nothing to reinstall.${modes || commands ? ` This library holds ${modes} mode${modes === 1 ? '' : 's'} and ${commands} command${commands === 1 ? '' : 's'}.` : ''}</p>
+
+        <h3>Get started</h3>
+        <pre>/plugin install kata --marketplace DeepanshuGautam/kata
+/kata-setup          your own private Kata Library page
+/kata modes          what you can run
+/kata-panel          the live pane</pre>
+
+        <h3>Who made it</h3>
+        <div class="author"><span class="mark" aria-hidden="true">⛩</span><div>Built by <strong>Deepanshu Gautam</strong>. Source, issues and releases: <a href="https://github.com/DeepanshuGautam/kata" target="_blank" rel="noopener">github.com/DeepanshuGautam/kata</a>. MIT licensed.</div></div>
+      </article>`;
+  }
+
+  // Steps library view: each example with what it does, and a way to copy it into this library.
+  function renderExamples(ed) {
+    const cmds = Object.entries(EXAMPLES.commands || {}), modes = Object.entries(EXAMPLES.modes || {});
+    const have = (map, id) => map.has(id);
+    const addBtn = (kind, id) => !state.canEdit ? ''
+      : have(kind === 'mode' ? state.modes : state.commands, id)
+        ? `<span class="pill">In your library</span>`
+        : `<button data-act="add-example" data-kind="${kind}" data-id="${esc(id)}">Add to my library</button>`;
+    const modeCard = ([id, m]) => `<div class="ex"><header><div><div class="t">${esc(m.name || id)} <span class="id mono">${esc(id)}</span></div><div class="status">${(m.steps || []).map(stepId).map(esc).join(' → ')}</div></div>${addBtn('mode', id)}</header><div class="excerpt">${esc(m.description || '')}</div></div>`;
+    const cmdCard = ([id, c]) => `<div class="ex"><header><div><div class="t">${esc(c.title || id)} <span class="id mono">${esc(id)}</span></div><div class="meta" style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)"><span class="pill ${esc(c.gate || 'continue')}">${esc(c.gate || 'continue')}</span>${c.slash ? `<code>/${esc(c.slash)}</code>` : ''}</div></div>${addBtn('command', id)}</header><div class="excerpt">${esc(c.instruction || '')}</div><details><summary>Full instruction</summary><div class="instruction">${esc(c.instruction || '')}</div></details></div>`;
+    ed.innerHTML = `
+      <section class="examples">
+        <div class="eyebrow">Steps library</div>
+        <h2>Examples to start from</h2>
+        <p class="status" style="margin:6px 0 4px;max-width:68ch">Commands and modes others have written, to copy into your library and adapt. Nothing here runs until you add it. Adding a mode adds the commands it lists; anything already in your library is left as it is.${state.canEdit ? '' : ' Adding needs edit access to this page.'}</p>
+        ${modes.length ? `<h3>Modes</h3>${modes.map(modeCard).join('')}` : ''}
+        ${cmds.length ? `<h3>Commands</h3>${cmds.map(cmdCard).join('')}` : '<p class="status">No examples in this version.</p>'}
+      </section>`;
+  }
+  async function addExample(kind, id) {
+    const items = [];
+    if (kind === 'mode') {
+      const m = EXAMPLES.modes[id]; if (!m) return;
+      for (const cid of (m.steps || []).map(stepId)) if (!state.commands.has(cid) && EXAMPLES.commands[cid]) items.push(['commands', cid, EXAMPLES.commands[cid]]);
+      if (!state.modes.has(id)) items.push(['modes', id, m]);
+    } else if (!state.commands.has(id) && EXAMPLES.commands[id]) items.push(['commands', id, EXAMPLES.commands[id]]);
+    if (!items.length) return toast('Already in your library.');
+    // Copies, so the embedded examples stay whole; a slash name someone already uses is left off.
+    const docs = items.map(([coll, did, d]) => {
+      const doc = { ...JSON.parse(JSON.stringify(d)), updatedAt: now() };
+      if (doc.slash && slashOwner(doc.slash, { kind: '', id: '' })) delete doc.slash;
+      return [coll, did, doc];
+    });
+    try {
+      for (const [coll, did, doc] of docs) await state.db.doc(`${coll}/${did}`).set(doc);
+      toast(`Added ${items.length} item${items.length === 1 ? '' : 's'} to your library`);
+    } catch (_) { toast('Could not add it. Check your edit access.'); }
+    render();
+  }
+
   function libraryJSON() {
     const out = { version: 1, exportedAt: now(), commands: {}, modes: {} };
     for (const [id, c] of [...state.commands.entries()].sort()) out.commands[id] = { title: c.title || '', ...(c.slash ? { slash: c.slash } : {}), gate: c.gate || 'continue', instruction: c.instruction || '' };
-    for (const [id, m] of [...state.modes.entries()].sort()) out.modes[id] = { name: m.name || '', description: m.description || '', argsHint: m.argsHint || '', steps: (m.steps || []).map(stepId) };
+    for (const [id, m] of [...state.modes.entries()].sort()) out.modes[id] = { name: m.name || '', ...(m.slash ? { slash: m.slash } : {}), description: m.description || '', argsHint: m.argsHint || '', steps: (m.steps || []).map(stepId) };
     return JSON.stringify(out, null, 2);
   }
   function renderExport() { const ex = $('export'); ex.hidden = false; if (ex.open) $('export-json').textContent = libraryJSON(); }
@@ -253,7 +363,7 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
   function startEdit() { const map = state.sel.kind === 'mode' ? state.modes : state.commands; state.draft = JSON.parse(JSON.stringify(map.get(state.sel.id))); if (state.sel.kind === 'mode') state.draft.steps = (state.draft.steps || []).map(stepId); state.editing = true; render(); }
   function syncDraftFromForm() {
     if (!state.editing) return;
-    if (state.sel.kind === 'mode') { state.draft.name = $('f-name').value; state.draft.argsHint = $('f-args').value; state.draft.description = $('f-desc').value; }
+    if (state.sel.kind === 'mode') { state.draft.name = $('f-name').value; state.draft.argsHint = $('f-args').value; state.draft.description = $('f-desc').value; state.draft.slash = $('f-mslash').value.trim().toLowerCase(); }
     else { state.draft.title = $('f-title').value; state.draft.slash = $('f-slash').value.trim().toLowerCase(); state.draft.gate = $('f-gate').value; state.draft.instruction = $('f-instr').value; }
   }
   async function save() {
@@ -262,11 +372,9 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (state.sel.kind === 'mode' && !d.name.trim()) return toast('A mode needs a name.');
     if (state.sel.kind === 'command' && !d.title.trim()) return toast('A command needs a title.');
     if (state.sel.kind === 'command' && !d.instruction.trim()) return toast('A command needs an instruction.');
-    if (state.sel.kind === 'command') {
-      if (!d.slash) delete d.slash;
-      else if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(d.slash) || RESERVED_SLASH.includes(d.slash)) return toast('Slash command: lowercase letters, digits, - and _, and not a Kata built-in.');
-      else if ([...state.commands.entries()].some(([cid, c]) => cid !== state.sel.id && c.slash === d.slash)) return toast(`/${d.slash} is taken by another command.`);
-    }
+    if (!d.slash) delete d.slash;
+    else if (!SLASH_RE.test(d.slash) || RESERVED_SLASH.includes(d.slash)) return toast('Slash command: lowercase letters, digits, - and _, and not a Kata built-in.');
+    else { const owner = slashOwner(d.slash, state.sel); if (owner) return toast(`/${d.slash} is taken by ${owner}.`); }
     const path = `${state.sel.kind === 'mode' ? 'modes' : 'commands'}/${state.sel.id}`;
     try { await state.db.doc(path).set(d); state.editing = false; state.draft = null; toast('Saved'); }
     catch (e) { toast(e && e.code === 'invalid_argument' ? 'Not allowed to write here.' : 'Save failed. Try again.'); }
@@ -337,6 +445,9 @@ details.export pre{overflow-x:auto;font-family:var(--mono);font-size:12.5px;back
     if (b.dataset.kind && b.dataset.id && b.classList.contains('item')) return select(b.dataset.kind, b.dataset.id);
     if (b.id === 'btn-new-mode') return newItem('mode');
     if (b.id === 'btn-new-cmd') return newItem('command');
+    if (b.id === 'btn-about') return select('about');
+    if (b.id === 'btn-examples') return select('examples');
+    if (b.dataset.act === 'add-example') return addExample(b.dataset.kind, b.dataset.id);
     if (b.id === 'btn-export') { const ex = $('export'); ex.open = true; $('export-json').textContent = libraryJSON(); ex.scrollIntoView({ behavior: 'smooth' }); return; }
     if (b.id === 'btn-copy') { const txt = libraryJSON(); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Copied'), () => { const r = document.createRange(); r.selectNodeContents($('export-json')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Select and copy the JSON above.'); }); return; }
     switch (b.dataset.act) {
