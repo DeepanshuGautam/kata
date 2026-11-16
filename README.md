@@ -93,6 +93,14 @@ Your commands and modes live on a private claude.ai page that every Claude Code 
 
 ## Watching a run
 
+In a real session, the pull-request mode at step 5 of 8:
+
+![The Kata pane in a Claude Code terminal session: the PR implementation run with steps 1 to 4 done, step 5 (lint, tests, architecture check) running, the last command and the scope](docs/images/terminal-pane.png)
+
+![The Kata band above the prompt and the status line below it in a Claude Code terminal session, both showing kata pr at step 5 of 8](docs/images/terminal-band.png)
+
+These were taken with Kata 0.1.0; 0.1.1 adds the branch, step progress such as `5/10 fixed`, and the issue counts, as in the snapshots above.
+
 The `/kata` skill runs the steps and writes `.kata/state.json` in the project, which ignores itself in git. The mod draws it:
 
 - **Band above the prompt:** the mode, the branch, the current step with its progress bar, a trail of every step, and the issue counts. Press *hide* to hide it.
