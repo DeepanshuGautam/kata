@@ -132,6 +132,18 @@ Kata has no server, collects nothing and sends no telemetry. The hooks module (`
 - **Blocks** a `git commit` whose message carries `Co-Authored-By`, `Generated with` or `Signed-off-by` during a run (or always, or never, per the setting). If the check itself fails, the commit goes ahead.
 - **Shows** a band above the prompt, a status line, a pane, toasts, and a native notification through your terminal when a run waits for you or ends (turn it off with the notify setting).
 
+### The mod in detail, for reviewers
+
+Everything below is in `hooks/register.tsx`, readable TypeScript.
+
+- **Programs it runs:** only `git branch --show-current` and, on a detached head, `git rev-parse --short HEAD`, written as fixed text, in the project folder, with a 5-second timeout. They read the branch name for the band, status line and pane. No other program, shell or package launcher.
+- **Tools it calls itself:** only `ArtifactData` with `action: "list"` on the `commands` and `modes` collections of the Kata Library page whose address you set in `/config`. It calls it at session start, every ten minutes and on `/kata-refresh`, and only after `tool.check` says the call is allowed without asking. It reads; it never writes to the page.
+- **Slash commands it runs itself:** `/kata` (or `/kata:kata`) with the arguments for the step or mode you just typed as one of your library's slash commands, for example `/kata-review x` runs `/kata run review x`; `/kata stop` when you press Stop run in the pane; `/kata-refresh` when you press Refresh library. Nothing else, and never on its own.
+- **Files it writes:** only `~/.claude/kata/library.json` (or `$KATA_HOME/library.json`), the local copy of your own Kata Library page. That file holds the commands and modes you wrote, which the `/kata` skill gives Claude as instructions; it is meant to be that, and it holds nothing else.
+- **Environment it reads:** `HOME` and `KATA_HOME`, only to build that file's path. It reads no credential, token or key.
+- **What it sends, and where:** nothing leaves your machine through the mod. The page read goes through Claude Code's own `ArtifactData` tool to your own claude.ai page. Notifications go to your terminal through Claude Code's notification channel.
+- **What its hooks change:** `prompt.compose` appends one section, `kata:config`, with your Kata settings and the ids of your commands and modes; the system prompt is otherwise untouched. `command.run` answers `/kata-panel`, `/kata-refresh`, `/kata` (when the skill is namespaced) and your library's slash commands, and passes every other command on unchanged. `tool.call` on Bash refuses a `git commit` whose message carries a trailer during a run (per the setting) and passes every other call on unchanged; other `tool.call` events are only observed to refresh the display. `ui.render` draws only the band above the prompt (`AbovePrompt`) and its own pane (`Pane`, id `kata`). It never changes a permission mode, a setting or another tool's input.
+
 It never changes Claude's permission settings. The instructions Claude follows come from your own library; treat a shared library like code someone else wrote. See [SECURITY.md](SECURITY.md) for the threat notes.
 
 ## Develop
