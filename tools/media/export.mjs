@@ -25,7 +25,7 @@ function driveDir() {
   return join(cloud, drive, 'My Drive', 'gautam-systems', 'kata')
 }
 
-if (!existsSync(join(MEDIA, 'terminal.png'))) throw new Error('docs/media is empty: run `mise run media` first')
+if (!existsSync(MEDIA) || !readdirSync(MEDIA).some((f) => f.endsWith('.png'))) throw new Error('docs/media is empty: run `mise run media` first')
 const out = join(driveDir(), `${version}_${date}`)
 rmSync(out, { recursive: true, force: true })
 
@@ -60,10 +60,10 @@ Media for the Kata plugin ${version}. They come from the plugin's own code and t
 
 | Folder | What | Made by |
 | --- | --- | --- |
-| readme/images | The terminal window, the band and status line, the pane, and five Kata Library views (PNG, 2x) | \`mise run media\` (kata) |
+| readme/images | The terminal at five moments of a run, and five Kata Library views: the same 16:9 frame, PNG at 2x | \`mise run media\` (kata) |
 | readme/animations | A \`/kata pr\` run in the terminal, and a tour of the Kata Library page (GIF) | same |
-${hasWeb ? `| website/images | The same stills as the website serves them: WebP, at most 1600 px wide | \`mise run kata:media\` (deepanshugautam-web) |
-| website/videos | The run as WebM (the demo on the Kata page) and as GIF, and the Kata Library page tour (GIF) | same |
+${hasWeb ? `| website/images | The same stills as the website serves them: WebP, 1600×900 | \`mise run kata:media\` (deepanshugautam-web) |
+| website/videos | The run as WebM (the demo on the Kata page) and as GIF | same |
 ` : ''}
 File names: \`kata_<version>_<area>_<what>.<ext>\`. Exported with \`mise run assets:export\` (kata).
 `)
