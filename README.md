@@ -1,5 +1,7 @@
 # Kata
 
+<img src=".claude-plugin/icon.png" alt="Kata icon: a torii gate" width="96">
+
 Practised sequences for Claude Code.
 
 In martial arts a *kata* is a sequence of moves you drill until it runs on its own. Kata does the same for the work you repeat with Claude. You write each step once as a **command**, chain commands into **modes**, and run them from any terminal session, either a whole mode or a single step, each with its own slash command. While a run goes, Kata shows where it is: the current step, the issues a review found and how many are fixed, the branch, and every step's outcome.
@@ -117,9 +119,20 @@ Commands report progress in a generic way, so your own commands light up the sam
 | `/kata-panel` | Open the pane |
 | `/<slash>` | Any command or mode's own slash command |
 
-## Privacy and security
+## What Kata runs, reads, writes and sends
 
-The mod makes no network calls of its own and sends no telemetry. It reads your library page only through Claude Code's own artifact tool, and only when that needs no permission prompt. It runs `git branch` to show the branch. See [SECURITY.md](SECURITY.md) for the threat notes.
+Kata has no server, collects nothing and sends no telemetry. The hooks module (`hooks/register.tsx`) is plain TypeScript, and so is everything else; nothing is compiled or minified.
+
+- **Reads:** the run state file `<project>/.kata/state.json`, which the `/kata` skill writes; the local library copy `~/.claude/kata/library.json` (or `$KATA_HOME/library.json`); and the bundled `library/default.json`, which is empty.
+- **Writes:** only the local library copy, when it pulls your Kata Library page. The `/kata` skill writes the run state file through Claude's own tools.
+- **Reads your Kata Library page** on claude.ai through Claude Code's own `ArtifactData` tool, when you set its address in `/config`: at session start, every ten minutes and on `/kata-refresh`. It never asks for permission to do this. If the tool isn't available, or using it would ask, it uses the local copy instead.
+- **Runs** `git branch --show-current` (and `git rev-parse --short HEAD` on a detached head) in your project, to show the branch. Nothing else.
+- **Adds to Claude's context** one short section with your Kata settings and the ids of your commands and modes, so Claude doesn't have to ask for them.
+- **Registers slash commands:** `/kata-panel`, `/kata-refresh`, `/kata` when plugin skills are namespaced, and one for each command or mode in your library that has a `slash` name. Each one only runs `/kata` with that id.
+- **Blocks** a `git commit` whose message carries `Co-Authored-By`, `Generated with` or `Signed-off-by` during a run (or always, or never, per the setting). If the check itself fails, the commit goes ahead.
+- **Shows** a band above the prompt, a status line, a pane, toasts, and a native notification through your terminal when a run waits for you or ends (turn it off with the notify setting).
+
+It never changes Claude's permission settings. The instructions Claude follows come from your own library; treat a shared library like code someone else wrote. See [SECURITY.md](SECURITY.md) for the threat notes.
 
 ## Develop
 
