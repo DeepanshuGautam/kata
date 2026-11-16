@@ -1,6 +1,7 @@
 // Renders Kata's README and website media from the current code, into docs/media:
-//   terminal.png, terminal-band.png, terminal-pane.png, terminal-run.gif/.webm   the band and pane in a terminal
-//   library-*.png, library-tour.gif                                      the Kata Library page
+//   terminal-0N-<moment>.png, terminal-run.gif/.webm   a terminal with the band and pane, at five moments of a run
+//   library-0N-<view>.png, library-tour.gif            the Kata Library page, five views
+// Every still is the same 1440×810 frame at 2x, so the README and the website can show them full width, side by side.
 // The band and pane come from the mod itself: hooks/media.test.tsx mounts them for each moment of a pull-request
 // run and prints what the mod drew; this script lays those trees out in a terminal window and screenshots it.
 // The page is the real artifact/kata-library.html with an in-memory store holding the steps library.
@@ -108,7 +109,7 @@ body { margin: 0; background: #111214; font: 13px/1.42 "SF Mono", Menlo, Monaco,
 .window { width: 1440px; margin: 0; border-radius: 10px; overflow: hidden; background: #1c1c1e; border: 1px solid #333; }
 .titlebar { height: 30px; background: #2a2a2c; display: flex; align-items: center; padding: 0 12px; gap: 8px; color: #9a9a9a; font: 12px -apple-system, "Segoe UI", sans-serif; }
 .dot { width: 12px; height: 12px; border-radius: 50%; } .titlebar .title { flex: 1; text-align: center; margin-right: 52px; }
-.body { display: flex; height: 700px; }
+.body { display: flex; height: 778px; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 10px 14px 8px; }
 .transcript { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; white-space: pre; }
 .line.say { color: ${THEME.text}; } .line.you { color: ${THEME.inactive}; } .line.ok { color: ${THEME.success}; } .line.dim { color: ${THEME.inactive}; }
@@ -159,6 +160,15 @@ function libraryPage() {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${stub}${fragment}</body></html>`
 }
 
+// The terminal stills: file, and the moment of the run (a frame of hooks/media.test.tsx).
+const TERMINAL_STILLS = [
+  ['terminal-01-plan.png', 'read'],
+  ['terminal-02-review.png', 'review'],
+  ['terminal-03-fix.png', 'fix-2'],
+  ['terminal-04-checks.png', 'verify'],
+  ['terminal-05-done.png', 'done'],
+]
+
 // ----- 4. Shoot -------------------------------------------------------------------------------------
 
 async function shoot() {
@@ -173,18 +183,14 @@ async function shoot() {
   const save = (name, buf) => { writeFileSync(join(OUT, name), buf); written.push(name) }
 
   // Terminal: stills at 2x, the run as a GIF at 1x.
-  const sharp = await browser.newPage({ viewport: { width: 1440, height: 732 }, deviceScaleFactor: 2 })
-  const still = frames.get('fix-2')
-  await sharp.setContent(terminalPage(still))
-  save('terminal.png', await sharp.locator('.window').screenshot())
-  save('terminal-band.png', await sharp.locator('.main').screenshot({ clip: undefined }).then(async () => {
-    const box = await sharp.locator('#band').boundingBox(), main = await sharp.locator('.main').boundingBox()
-    return sharp.screenshot({ clip: { x: main.x, y: box.y - 8, width: main.width, height: main.y + main.height - box.y + 8 } })
-  }))
-  save('terminal-pane.png', await sharp.locator('#pane').screenshot())
+  const sharp = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 2 })
+  for (const [file, name] of TERMINAL_STILLS) {
+    await sharp.setContent(terminalPage(frames.get(name)))
+    save(file, await sharp.locator('.window').screenshot())
+  }
   await sharp.close()
 
-  const flat = await browser.newPage({ viewport: { width: 1440, height: 732 }, deviceScaleFactor: 1 })
+  const flat = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 1 })
   const order = ['read', 'implement', 'review', 'fix-0', 'fix-2', 'fix-4', 'verify', 'pr', 'done']
   const gifFrames = []
   for (const name of order) {
@@ -203,7 +209,7 @@ async function shoot() {
   else {
     const tmp = join(ROOT, '.media-tmp')
     rmSync(tmp, { recursive: true, force: true })
-    const ctx = await browser.newContext({ viewport: { width: 1440, height: 732 }, recordVideo: { dir: tmp, size: { width: 1440, height: 732 } } })
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 810 }, recordVideo: { dir: tmp, size: { width: 1440, height: 810 } } })
     const rec = await ctx.newPage()
     for (const [i, f] of gifFrames.entries()) {
       await rec.setContent(terminalPage(frames.get(order.filter((n) => frames.has(n))[i])))
@@ -217,19 +223,19 @@ async function shoot() {
 
   // The Kata Library page: stills at 2x, a tour as a GIF at 1x.
   const views = [
-    ['library-mode.png', '[data-kind="mode"][data-id="pr"]'],
-    ['library-command.png', '[data-kind="command"][data-id="review"]'],
-    ['library-edit.png', '[data-act="edit"]'],
-    ['library-steps.png', '#btn-examples'],
-    ['library-about.png', '#btn-about'],
+    ['library-01-mode.png', '[data-kind="mode"][data-id="pr"]'],
+    ['library-02-command.png', '[data-kind="command"][data-id="review"]'],
+    ['library-03-edit.png', '[data-act="edit"]'],
+    ['library-04-steps.png', '#btn-examples'],
+    ['library-05-about.png', '#btn-about'],
   ]
   for (const [scale, gif] of [[2, false], [1, true]]) {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 760 }, deviceScaleFactor: scale, colorScheme: 'dark' })
+    const page = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: scale, colorScheme: 'dark' })
     await page.setContent(libraryPage(), { waitUntil: 'networkidle' })
     await page.waitForSelector('[data-kind="mode"][data-id="pr"]')
     const tour = []
     for (const [file, selector] of views) {
-      if (file === 'library-steps.png') await page.click('[data-act="cancel"]').catch(() => {})
+      if (file === 'library-04-steps.png') await page.click('[data-act="cancel"]').catch(() => {})
       await page.click(selector)
       await page.mouse.move(1270, 750)
       await page.waitForTimeout(250)

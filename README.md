@@ -61,9 +61,7 @@ This is the workflow Kata was built for, and it ships in the **steps library** (
 | 7 | `acceptance` | `/kata-acceptance` | continue | Checks every criterion with evidence and loops back to implement for anything unmet |
 | 8 | `pr` | `/kata-pr` | continue | Opens the pull request with Summary, Description, Testing and Checklist |
 
-Run it as `/kata pr "1.0 PR 3 logging package"`, or any single step by its slash command. While it runs, the band and the pane show where it is:
-
-![The Kata pane: every step with its status, duration and note, the fix step at 2/4 fixed, and the issues list with severity, file and line](docs/media/terminal-pane.png)
+Run it as `/kata pr "1.0 PR 3 logging package"`, or any single step by its slash command. While it runs, the band and the pane show where it is: see [Watching a run](#watching-a-run).
 
 Build your own the same way: a docs pass, a release, a migration, a bug triage. Each command is one instruction written as an order, and each mode is the order you run them in.
 
@@ -85,17 +83,49 @@ Share the page with your team, and everyone with the plugin runs the same steps.
 
 Your commands and modes live on a private claude.ai page that every Claude Code session with the plugin reads.
 
-| The `pr` mode and its eight steps | A command, with its slash command and gate |
-|---|---|
-| ![The Kata Library page showing the PR implementation mode with its eight steps](docs/media/library-mode.png) | ![The Full self-review command with its /kata-review slash command, its gate and its instruction](docs/media/library-command.png) |
-| **Editing a command in place** | **The Steps library, to copy examples from** |
-| ![Editing the Full self-review command: identifier, title, gate, slash command and instruction](docs/media/library-edit.png) | ![The Steps library listing the PR implementation mode and its commands, marked In your library](docs/media/library-steps.png) |
+**The `pr` mode and its eight steps, each with its gate**
 
-![A tour of the Kata Library page: the pr mode, a command, editing it, the Steps library and the About view](docs/media/library-tour.gif)
+![The Kata Library page showing the PR implementation mode with its eight steps](docs/media/library-01-mode.png)
+
+**A command, with the slash command that runs it on its own**
+
+![The Full self-review command with its /kata-review slash command, its gate and its instruction](docs/media/library-02-command.png)
+
+**Editing a command in place: your terminals pick the change up**
+
+![Editing the Full self-review command: identifier, title, gate, slash command and instruction](docs/media/library-03-edit.png)
+
+**The Steps library, to copy examples from**
+
+![The Steps library listing the PR implementation mode and its commands, marked In your library](docs/media/library-04-steps.png)
+
+**About: why Kata exists and what it does**
+
+![The About view of the Kata Library page: what Kata is, why it exists and what you can do with it](docs/media/library-05-about.png)
 
 ## Watching a run
 
-![A Claude Code terminal during a /kata pr run: the transcript, the band and status line at step 4 of 8 with 2/4 issues fixed on branch feat/farewell, and the Kata pane with every step and the issues list](docs/media/terminal.png)
+A `/kata pr` run in a terminal, from the plan to the pull request. The band sits above the prompt, the status line below it, and the pane on the right.
+
+**1. Reading the plan**
+
+![Step 1 of 8: the band shows kata pr on branch feat/farewell reading the plan; the pane lists the eight steps](docs/media/terminal-01-plan.png)
+
+**2. The self-review is reading every touched file**
+
+![Step 3 of 8, Full self-review: steps 1 and 2 done with their notes in the pane](docs/media/terminal-02-review.png)
+
+**3. Fixing what the review found: 2 of 4 fixed**
+
+![Step 4 of 8, Fix every issue, at 2 of 4 fixed: progress bars in the band and the pane, and the issues list with severity, file and line](docs/media/terminal-03-fix.png)
+
+**4. The checks: lint passed, tests running**
+
+![Step 5 of 8, Lint, tests, architecture check, at 1 of 2 checks; all 4 issues fixed](docs/media/terminal-04-checks.png)
+
+**5. Done: the pull request is open**
+
+![The run done: all eight steps ticked with their notes, 4 of 4 issues fixed, PR #12 opened](docs/media/terminal-05-done.png)
 
 The `/kata` skill runs the steps and writes `.kata/state.json` in the project, which ignores itself in git. The mod draws it:
 
