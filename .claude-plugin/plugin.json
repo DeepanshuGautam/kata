@@ -7,8 +7,11 @@
     "name": "Deepanshu Gautam",
     "url": "https://github.com/DeepanshuGautam"
   },
-  "homepage": "https://github.com/DeepanshuGautam/kata",
+  "homepage": "https://www.deepanshugautam.com/apps/kata",
   "repository": "https://github.com/DeepanshuGautam/kata",
+  "supportUrl": "https://github.com/DeepanshuGautam/kata/issues",
+  "documentationUrl": "https://github.com/DeepanshuGautam/kata#readme",
+  "privacyPolicyUrl": "https://github.com/DeepanshuGautam/kata/blob/main/PRIVACY.md",
   "license": "MIT",
   "keywords": [
     "workflow",
@@ -24,7 +27,7 @@
     "source": {
       "type": "string",
       "title": "Library source",
-      "description": "Where /kata reads commands and modes: a claude.ai artifact (the Kata Library page) or the local library file in the plugin's data directory.",
+      "description": "Where /kata reads commands and modes: a claude.ai artifact (the Kata Library page) or only the local library file, ~/.claude/kata/library.json.",
       "options": [
         "artifact",
         "local"

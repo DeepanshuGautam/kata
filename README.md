@@ -144,7 +144,7 @@ Everything below is in `hooks/register.tsx`, readable TypeScript.
 - **What it sends, and where:** nothing leaves your machine through the mod. The page read goes through Claude Code's own `ArtifactData` tool to your own claude.ai page. Notifications go to your terminal through Claude Code's notification channel.
 - **What its hooks change:** `prompt.compose` appends one section, `kata:config`, with your Kata settings and the ids of your commands and modes; the system prompt is otherwise untouched. `command.run` answers `/kata-panel`, `/kata-refresh`, `/kata` (when the skill is namespaced) and your library's slash commands, and passes every other command on unchanged. `tool.call` on Bash refuses a `git commit` whose message carries a trailer during a run (per the setting) and passes every other call on unchanged; other `tool.call` events are only observed to refresh the display. `ui.render` draws only the band above the prompt (`AbovePrompt`) and its own pane (`Pane`, id `kata`). It never changes a permission mode, a setting or another tool's input.
 
-It never changes Claude's permission settings. The instructions Claude follows come from your own library; treat a shared library like code someone else wrote. See [SECURITY.md](SECURITY.md) for the threat notes.
+It never changes Claude's permission settings. The instructions Claude follows come from your own library; treat a shared library like code someone else wrote. See [SECURITY.md](SECURITY.md) for the threat notes and [PRIVACY.md](PRIVACY.md) for what stays on your machine.
 
 ## Develop
 
