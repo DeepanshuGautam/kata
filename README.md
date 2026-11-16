@@ -81,6 +81,16 @@ Edits on the page reach your terminal sessions when a session starts, every ten 
 
 Share the page with your team, and everyone with the plugin runs the same steps. Only people with edit access can change it.
 
+## The Kata Library page
+
+Your commands and modes live on a private claude.ai page that every Claude Code session with the plugin reads.
+
+| The `pr` mode and its eight steps | A command, with its slash command and gate |
+|---|---|
+| ![The Kata Library page showing the PR implementation mode with its eight steps](docs/images/library-mode.jpg) | ![The Full self-review command with its /kata-review slash command, its gate and its instruction](docs/images/library-command.jpg) |
+| **Editing a command in place** | **The Steps library, to copy examples from** |
+| ![Editing the Full self-review command: identifier, title, gate, slash command and instruction](docs/images/library-edit.jpg) | ![The Steps library listing the PR implementation mode and its commands, marked In your library](docs/images/library-steps.jpg) |
+
 ## Watching a run
 
 The `/kata` skill runs the steps and writes `.kata/state.json` in the project, which ignores itself in git. The mod draws it:
