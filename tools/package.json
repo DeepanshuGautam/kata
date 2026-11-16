@@ -1,0 +1,9 @@
+{
+  "name": "kata-tools",
+  "private": true,
+  "description": "Tooling for the Kata repository: renders the README and website media (mise run media).",
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.65.0"
+  }
+}

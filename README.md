@@ -6,7 +6,7 @@ Practised sequences for Claude Code.
 
 In martial arts a *kata* is a sequence of moves you drill until it runs on its own. Kata does the same for the work you repeat with Claude. You write each step once as a **command**, chain commands into **modes**, and run them from any terminal session, either a whole mode or a single step, each with its own slash command. While a run goes, Kata shows where it is: the current step, the issues a review found and how many are fixed, the branch, and every step's outcome.
 
-![The Kata band above the prompt: mode, branch, current step with 6/10 issues fixed, and a trail of steps](docs/images/band.svg)
+![A /kata pr run in Claude Code: the band above the prompt and the pane beside it follow the run from reading the plan, through a review that finds 4 issues and fixes them, to the pull request](docs/media/terminal-run.gif)
 
 ## Install
 
@@ -63,7 +63,7 @@ This is the workflow Kata was built for, and it ships in the **steps library** (
 
 Run it as `/kata pr "1.0 PR 3 logging package"`, or any single step by its slash command. While it runs, the band and the pane show where it is:
 
-![The Kata pane: every step with its status and duration, the fix step at 6/10, and the issues list with severity, file and line](docs/images/pane.svg)
+![The Kata pane: every step with its status, duration and note, the fix step at 2/4 fixed, and the issues list with severity, file and line](docs/media/terminal-pane.png)
 
 Build your own the same way: a docs pass, a release, a migration, a bug triage. Each command is one instruction written as an order, and each mode is the order you run them in.
 
@@ -87,19 +87,15 @@ Your commands and modes live on a private claude.ai page that every Claude Code 
 
 | The `pr` mode and its eight steps | A command, with its slash command and gate |
 |---|---|
-| ![The Kata Library page showing the PR implementation mode with its eight steps](docs/images/library-mode.jpg) | ![The Full self-review command with its /kata-review slash command, its gate and its instruction](docs/images/library-command.jpg) |
+| ![The Kata Library page showing the PR implementation mode with its eight steps](docs/media/library-mode.png) | ![The Full self-review command with its /kata-review slash command, its gate and its instruction](docs/media/library-command.png) |
 | **Editing a command in place** | **The Steps library, to copy examples from** |
-| ![Editing the Full self-review command: identifier, title, gate, slash command and instruction](docs/images/library-edit.jpg) | ![The Steps library listing the PR implementation mode and its commands, marked In your library](docs/images/library-steps.jpg) |
+| ![Editing the Full self-review command: identifier, title, gate, slash command and instruction](docs/media/library-edit.png) | ![The Steps library listing the PR implementation mode and its commands, marked In your library](docs/media/library-steps.png) |
+
+![A tour of the Kata Library page: the pr mode, a command, editing it, the Steps library and the About view](docs/media/library-tour.gif)
 
 ## Watching a run
 
-In a real session, the pull-request mode at step 5 of 8:
-
-![The Kata pane in a Claude Code terminal session: the PR implementation run with steps 1 to 4 done, step 5 (lint, tests, architecture check) running, the last command and the scope](docs/images/terminal-pane.png)
-
-![The Kata band above the prompt and the status line below it in a Claude Code terminal session, both showing kata pr at step 5 of 8](docs/images/terminal-band.png)
-
-These were taken with Kata 0.1.0; 0.1.1 adds the branch, step progress such as `5/10 fixed`, and the issue counts, as in the snapshots above.
+![A Claude Code terminal during a /kata pr run: the transcript, the band and status line at step 4 of 8 with 2/4 issues fixed on branch feat/farewell, and the Kata pane with every step and the issues list](docs/media/terminal.png)
 
 The `/kata` skill runs the steps and writes `.kata/state.json` in the project, which ignores itself in git. The mod draws it:
 
@@ -176,3 +172,8 @@ tsc -p .                         type-check, once the engine has written .claude
 ## License
 
 MIT. Made by [Deepanshu Gautam](https://github.com/DeepanshuGautam).
+
+## Updating the pictures
+
+Every image and video in this README and on the website comes from `mise run media`. It draws the band and pane through the mod itself (`hooks/media.test.tsx`), and the Kata Library page from `artifact/kata-library.html` with the steps library. It then writes `docs/media/`, replacing what was there. Run it after any change you can see in the band, the pane or the page, and commit `docs/media/` with that change.
+

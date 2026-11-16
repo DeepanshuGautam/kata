@@ -4,6 +4,9 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+### Added
+- `mise run media` renders every README and website picture and video (`docs/media/`) from the current mod and Kata Library page: terminal stills, a GIF and a WebM of a `pr` run, page stills and a GIF tour. It replaces the hand-made snapshots in `docs/images/`.
+
 ### Fixed
 - `/kata-edit` names every reserved slash name, pins deletes to the version read, and when the page refuses a stale write it re-reads, shows what changed and asks before applying on top.
 
