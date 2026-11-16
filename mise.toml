@@ -11,3 +11,7 @@ outputs = ["tools/node_modules/.package-lock.json"]
 description = "Render Kata's README and website media from the current code: terminal band and pane, the Kata Library page, stills and GIFs, into docs/media"
 depends = ["media:install"]
 run = "node tools/media/build.mjs"
+
+[tasks."assets:export"]
+description = "Copy the media (docs/media, and the website's copies) into gautam-systems/kata/<version>_<date>/ on Google Drive"
+run = "node tools/media/export.mjs"
