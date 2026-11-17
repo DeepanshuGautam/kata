@@ -5,6 +5,7 @@
 // replaced. Run `mise run media` first, and `mise run kata:media` in the website repository for its copies.
 //   KATA_DRIVE_DIR  the destination folder (default: My Drive/gautam-systems/kata under ~/Library/CloudStorage)
 //   WEB_DIR         the website checkout (default: ../deepanshugautam-web); skipped when missing
+import { spawnSync } from 'node:child_process'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, extname, join } from 'node:path'
@@ -68,3 +69,11 @@ ${hasWeb ? `| website/images | The same stills as the website serves them: WebP,
 File names: \`kata_<version>_<area>_<what>.<ext>\`. Exported with \`mise run assets:export\` (kata).
 `)
 console.log(`${out}\n  ${copied.join('\n  ')}\n  README.md`)
+
+// The files only reach Drive while Google Drive for desktop runs; without it they wait in the local folder.
+if (!process.env.KATA_DRIVE_DIR && spawnSync('pgrep', ['-x', 'Google Drive']).status !== 0) {
+  const started = spawnSync('open', ['-a', 'Google Drive']).status === 0
+  console.log(started
+    ? 'Google Drive for desktop was not running: started it, so the files upload in the next minutes.'
+    : 'Google Drive for desktop is not running: start it, or the files stay on this Mac only.')
+}
