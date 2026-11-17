@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { KataIssue, KataLibraryInfo, KataProgress, KataState, KataStep, KataStepStatus } from '../types'
+import type { KataIssue, KataLibraryInfo, KataProgress, KataSeverity, KataState, KataStep, KataStepStatus, KataVerdict } from '../types'
 
 // ---------------------------------------------------------------------------------------------
 // Kata mod. It never runs a step: the /kata skill does, writing <project>/.kata/state.json.
@@ -28,7 +28,9 @@ const ARTIFACT_EVERY_MS = 10 * 60 * 1000
 
 const GLYPH: Record<KataStepStatus, string> = { done: '✓', running: '▶', failed: '✗', skipped: '–', pending: '○' }
 const COLOR: Record<KataStepStatus, string> = { done: 'success', running: 'claude', failed: 'error', skipped: 'inactive', pending: 'inactive' }
-const SEVERITY_COLOR = { high: 'error', medium: 'warning', low: 'inactive' } as const
+const SEVERITY_COLOR: Record<KataSeverity, string> = { high: 'error', medium: 'warning', low: 'inactive', major: 'error', minor: 'warning', nit: 'inactive' }
+const SEVERITY_ORDER: KataSeverity[] = ['major', 'minor', 'nit', 'high', 'medium', 'low']
+const VERDICT_COLOR: Record<KataVerdict, string> = { approve: 'success', comment: 'warning', 'request changes': 'error' }
 
 const hhmm = (iso?: string): string => {
   if (!iso) return ''
@@ -59,6 +61,17 @@ const issueCounts = (issues: readonly KataIssue[] | undefined) => {
   const fixed = list.filter(i => i.status === 'fixed').length
   const skipped = list.filter(i => i.status === 'skipped').length
   return { total: list.length, fixed, skipped, open: list.length - fixed - skipped }
+}
+
+/** `2 major · 1 minor · 3 nits`, while nothing is fixed or skipped yet and every issue has a severity; else null. */
+const severitySummary = (issues: readonly KataIssue[] | undefined): string | null => {
+  const list = issues ?? []
+  if (!list.length || list.some(i => !i.severity || i.status !== 'open')) return null
+  return SEVERITY_ORDER
+    .map(sev => [sev, list.filter(i => i.severity === sev).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([sev, n]) => `${n} ${sev === 'nit' && n !== 1 ? 'nits' : sev}`)
+    .join(' · ')
 }
 
 /** The countable progress of a step: its own, or, while it works through the run's issues, fixed of found. */
@@ -139,7 +152,8 @@ async function announce($: EngineInterface, before: KataState | null, now: KataS
   }
   if (!isActive(now) && isActive(before)) {
     const c = issueCounts(now.issues)
-    const tail = c.total ? ` · ${c.fixed}/${c.total} issues fixed` : ''
+    const found = severitySummary(now.issues)
+    const tail = (found ? ` · ${found}` : c.total ? ` · ${c.fixed}/${c.total} issues fixed` : '') + (now.verdict ? ` · ${now.verdict}` : '')
     $.ui.toast(`⛩ Kata ${name}: ${now.status}${tail}`)
     send(`Run ${now.status}${tail}.`)
   }
@@ -501,6 +515,7 @@ export const register: Register = (on, options) => {
     const step = state.steps[state.current]
     const p = stepProgress(state, step)
     const issues = issueCounts(state.issues)
+    const found = severitySummary(state.issues)
     // Newer engines tell the band it is collapsed; older ones do not carry the prop.
     const isCollapsed = (e.props as { isCollapsed?: boolean }).isCollapsed === true
     const twoRows = e.props.maxRows >= 2 && !isCollapsed
@@ -528,9 +543,10 @@ export const register: Register = (on, options) => {
             ))}
             {issues.total > 0 && (
               <Text color={issues.open ? 'warning' : 'success'}>
-                ◆ {issues.total} found · {issues.fixed} fixed{issues.open ? ` · ${issues.open} open` : ''}
+                ◆ {found ?? `${issues.total} found · ${issues.fixed} fixed${issues.open ? ` · ${issues.open} open` : ''}`}
               </Text>
             )}
+            {state.verdict && <Text color={VERDICT_COLOR[state.verdict]} bold>verdict: {state.verdict}</Text>}
           </Box>
         )}
       </Box>
@@ -596,6 +612,7 @@ export const register: Register = (on, options) => {
 
     const issues = state.issues ?? []
     const counts = issueCounts(issues)
+    const found = severitySummary(issues)
     const statusColor = state.status === 'done' ? 'success' : state.status === 'failed' ? 'error' : state.status === 'paused' ? 'warning' : state.status === 'stopped' ? 'inactive' : 'claude'
     return (
       <Box flexDirection="column" gap={1}>
@@ -610,6 +627,7 @@ export const register: Register = (on, options) => {
           </Text>
           {state.args !== '' && <Text dimColor>args: {cut(state.args, width - 8)}</Text>}
           {state.scope && <Text>scope: {cut(state.scope, width * 2 - 8)}</Text>}
+          {state.verdict && <Text color={VERDICT_COLOR[state.verdict]} bold>verdict: {state.verdict}</Text>}
         </Box>
         <Text dimColor>{rule}</Text>
         <Box flexDirection="column">
@@ -640,9 +658,11 @@ export const register: Register = (on, options) => {
             <Text dimColor>{rule}</Text>
             <Box gap={1}>
               <Text bold>Issues</Text>
-              <Text color={counts.open ? 'warning' : 'success'}>
-                {bar(counts.fixed, counts.total, 12)} {counts.fixed}/{counts.total} fixed{counts.skipped ? ` · ${counts.skipped} skipped` : ''}
-              </Text>
+              {found
+                ? <Text color="warning">{found}</Text>
+                : <Text color={counts.open ? 'warning' : 'success'}>
+                    {bar(counts.fixed, counts.total, 12)} {counts.fixed}/{counts.total} fixed{counts.skipped ? ` · ${counts.skipped} skipped` : ''}
+                  </Text>}
             </Box>
             {issues.map(issue => {
               const where = issue.file ? `${issue.file}${issue.line ? `:${issue.line}` : ''}` : ''

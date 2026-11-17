@@ -5,6 +5,8 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 ## [Unreleased]
 
 ### Added
+- The `review-pr` example mode in the steps library: read a pull request, review every changed file, sort findings into major, minor and nits, decide the verdict (request changes on any major, comment on minors, approve on nits only) and post the review with inline comments after a confirm gate.
+- Review severities `major`, `minor` and `nit`, and a run `verdict`: the band and pane count findings by severity until one is fixed, and show the verdict; the end-of-run toast carries both.
 - Runner flags: `--dry-run` prints the plan and writes nothing; `--from`, `--only` and `--skip` choose the steps by command id or number; `--no-confirm` passes `confirm` gates. With any flag the plan is printed first, and skipped steps are recorded as skipped with the reason.
 - `mise run media` renders every README and website picture and video (`docs/media/`) from the current mod and Kata Library page: terminal stills, a GIF and a WebM of a `pr` run, page stills and a GIF tour. It replaces the hand-made snapshots in `docs/images/`.
 

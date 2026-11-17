@@ -63,6 +63,19 @@ This is the workflow Kata was built for, and it ships in the **steps library** (
 
 Run it as `/kata pr "1.0 PR 3 logging package"`, or any single step by its slash command. While it runs, the band and the pane show where it is: see [Watching a run](#watching-a-run).
 
+### A second example: reviewing a pull request
+
+`review-pr` reviews someone else's pull request and ends with the right verdict. Copy it with `/kata-edit add example review-pr`, then run `/kata review-pr 42`.
+
+| Step | Command | Slash | Gate | What Claude does |
+|---|---|---|---|---|
+| 1 | `pr-read` | `/kata-pr-read` | stop-on-fail | Reads the pull request, its diff, CI status, linked issue and your CLAUDE.md, and any earlier review of it |
+| 2 | `pr-review` | `/kata-pr-review` | continue | Reads every changed file in full and records each finding as **major** (blocks the merge), **minor** or **nit**, with file and line |
+| 3 | `pr-verdict` | `/kata-pr-verdict` | confirm | Any major: request changes. Minors only: comment. Only nits or nothing: approve. Drafts the review with inline comments and waits for your yes |
+| 4 | `pr-post` | `/kata-pr-post` | continue | Posts the review with its inline comments in one call; on your own PR, as a comment |
+
+While it runs, the band counts the findings (`◆ 2 major · 1 minor · 3 nits`) and shows the verdict. `/kata review-pr 42 --skip pr-post` drafts the review without posting it. Run it again after new commits and it marks earlier findings fixed and looks only at the new code.
+
 Build your own the same way: a docs pass, a release, a migration, a bug triage. Each command is one instruction written as an order, and each mode is the order you run them in.
 
 ## Where your library lives

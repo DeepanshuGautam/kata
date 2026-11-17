@@ -86,13 +86,15 @@ Path: `<project root>/.kata/state.json` (outside `.claude/`, which Claude Code g
                 "severity": "high", "status": "open", "step": "review" } ] }
 ```
 
-A step may also carry `"activity": "<what you are doing now, one line>"` while it runs, and `"progress": { "done": 5, "total": 10, "label": "fixed" }` while it works through a countable list. The mods draw them: the band shows the current step with its progress bar, the branch, a trail of steps and the issue counts; the pane lists every step and every issue.
+A review mode may also set `"verdict"`: `approve`, `comment` or `request changes`, when its instruction decides one.
+
+A step may also carry `"activity": "<what you are doing now, one line>"` while it runs, and `"progress": { "done": 5, "total": 10, "label": "fixed" }` while it works through a countable list. The mods draw them: the band shows the current step with its progress bar, the branch, a trail of steps and the issue counts (by severity, such as `2 major · 1 minor · 3 nits`, until one is fixed), and the verdict; the pane lists every step and every issue.
 
 Write it: when the run starts (all steps `pending`, `current` 0, `issues` empty); when a step starts (`status: "running"`, `startedAt`); when a step ends (`done`, `failed` or `skipped`, `finishedAt`, a one-line `note`, `lastCommand`, `current` advanced, `activity` and a finished `progress` left as they are); when the run ends (`status` `done`, `failed` or `stopped`). Keep notes and activities to one line.
 
 Findings and progress, for any command:
 
-- When a step finds things to act on (review issues, failing checks, unmet criteria, TODOs), add each to `issues` with a short `id`, a one-line `title`, `file` and `line` when known, `severity` (`high`, `medium`, `low`), `status: "open"` and the finding step's command id as `step`. End the step's note with the count, such as `10 issues found`.
+- When a step finds things to act on (review issues, failing checks, unmet criteria, TODOs), add each to `issues` with a short `id`, a one-line `title`, `file` and `line` when known, `severity` (`high`, `medium`, `low`, or `major`, `minor`, `nit` when the instruction uses that review scale), `status: "open"` and the finding step's command id as `step`. End the step's note with the count, such as `10 issues found`.
 - When a step works through items, whether `issues` or a list of its own, set its `progress` to `{ done, total, label }` and write the file after each item. When the items are the run's issues, `total` is the number of issues the step set out to handle, and each handled issue becomes `fixed` or `skipped` (say why in the chat).
 - Set `activity` when the step moves to a new piece of work, such as `fixing #6 in src/log.ts` or `running the test suite`. Do not write the file more than once for the same change.
 

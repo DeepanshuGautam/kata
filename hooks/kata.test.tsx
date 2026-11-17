@@ -327,3 +327,60 @@ test('prompt.compose appends kata:config with the source, URL and library', { op
   expect(section?.text).toContain('artifact URL: https://claude.ai/artifact/abc')
   expect(section?.text).toContain('modes pr; commands acceptance, commit, fix, implement, pr, read, review, verify')
 })
+
+// ----- review severities and the verdict ------------------------------------------------------
+
+const reviewRun = (verdict?: 'approve' | 'comment' | 'request changes') => {
+  const base = running()
+  const severities = ['major', 'major', 'minor', 'nit', 'nit', 'nit'] as const
+  return {
+    ...base,
+    mode: 'review-pr',
+    modeName: 'PR review',
+    issues: severities.map((severity, i) => ({ id: String(i + 1), title: `finding ${i + 1}`, file: 'src/a.ts', line: i + 1, severity, status: 'open' as const, step: 'pr-review' })),
+    ...(verdict ? { verdict } : {}),
+  }
+}
+
+test('a review shows its findings by severity, major, minor and nits, and the verdict', async ($, on) => {
+  const world = newWorld()
+  setState(world, reviewRun('request changes'))
+  engine(on, world, newSeen())
+  await start($)
+
+  const band = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect((await band.find({ type: 'Text', text: /◆/ }))?.text).toBe('◆ 2 major · 1 minor · 3 nits')
+  expect((await band.find({ type: 'Text', text: /^verdict/ }))?.text).toBe('verdict: request changes')
+  await band.unmount()
+
+  const pane = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await pane.find({ type: 'Text', text: '2 major · 1 minor · 3 nits' })).toBeDefined()
+  expect((await pane.find({ type: 'Text', text: /^verdict/ }))?.text).toBe('verdict: request changes')
+  expect((await pane.findAll({ type: 'Text', text: 'nit' })).length).toBeGreaterThanOrEqual(3)
+  await pane.unmount()
+})
+
+test('once a finding is fixed, the counts go back to found, fixed and open', async ($, on) => {
+  const world = newWorld()
+  const run = reviewRun()
+  setState(world, { ...run, issues: run.issues.map((i, n) => (n === 0 ? { ...i, status: 'fixed' as const } : i)) })
+  engine(on, world, newSeen())
+  await start($)
+
+  const band = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect((await band.find({ type: 'Text', text: /◆/ }))?.text).toBe('◆ 6 found · 1 fixed · 5 open')
+  expect(await band.find({ type: 'Text', text: /^verdict/ })).toBeUndefined()
+  await band.unmount()
+})
+
+test('the end-of-run toast carries the severities and the verdict', async ($, on) => {
+  const world = newWorld()
+  const seen = newSeen()
+  setState(world, reviewRun())
+  engine(on, world, seen)
+  await start($)
+
+  setState(world, { ...reviewRun('approve'), status: 'done', issues: reviewRun().issues.filter(i => i.severity === 'nit') })
+  await $.tool.call({ tool: 'Write', file_path: '/proj/.kata/state.json', content: '{}' })
+  expect(seen.toasts).toContain('⛩ Kata PR review: done · 3 nits · approve')
+})

@@ -48,6 +48,30 @@
       "slash": "kata-pr",
       "gate": "continue",
       "instruction": "Push the branch and open the pull request with `gh pr create`. Title: the commit summary. Body, in this order: `## Summary` with three to six bullets of what changed; `## Description` with why the change is made, the design decisions taken, and what a reviewer should read first; `## Testing` with the commands run and their results; `## Checklist` with each acceptance criterion as a ticked or unticked box. No attribution footer or generated-by line. Print the PR URL, then mark the Kata run finished in the state file."
+    },
+    "pr-read": {
+      "title": "Read the pull request",
+      "slash": "kata-pr-read",
+      "gate": "stop-on-fail",
+      "instruction": "Find the pull request named in the arguments (a number or a URL; with neither, the open pull request for the current branch). Run gh pr view with its title, body, author, base and head branches, linked issues and state, gh pr checks for CI, and gh pr diff for the change. Read the repository's CLAUDE.md and any CONTRIBUTING file: their rules are part of the review. If you reviewed this pull request before, read that review (gh api repos/{owner}/{repo}/pulls/{n}/reviews and its comments) and list the commits pushed since. Write the scope in one line: what the pull request says it does. Stop and say so if the pull request is closed, merged or cannot be found."
+    },
+    "pr-review": {
+      "title": "Review every changed file",
+      "slash": "kata-pr-review",
+      "gate": "continue",
+      "instruction": "Note the branch you are on, check out the pull request's head with gh pr checkout, and read every changed file in full, not only the diff hunks, plus the code that calls what changed. Do not invoke any review skill, slash command or subagent. Record each finding in the Kata state file's issues with the file, the line on the pull request's side of the diff, a one-line title and a severity on the review scale: major for a bug, data loss, a security or privacy problem, a broken API contract or migration, new behaviour without tests, or a rule in CLAUDE.md broken; minor for edge cases, error handling, a misleading name, a missing doc or translation, or a test that does not test what it says; nit for style, wording, ordering or a simpler way to write the same thing. On a re-review, carry over the earlier findings, mark the ones the new commits fixed as fixed, and raise new findings only on new code. Print the findings grouped by severity and end the step's note with the counts, such as 2 major, 1 minor, 3 nits. No findings is a valid result only after you have read every changed file. When you are done, switch back to the branch you were on."
+    },
+    "pr-verdict": {
+      "title": "Decide the verdict",
+      "slash": "kata-pr-verdict",
+      "gate": "confirm",
+      "instruction": "Decide from the open findings: any major means request changes; minors without a major mean comment, unless the project's CLAUDE.md says to approve with comments; only nits, or nothing, means approve. Set the verdict in the Kata state file. Draft the review: a short summary of what the pull request does and how well, the verdict and why, then one inline comment per finding on its file and line, starting with major:, minor: or nit:, saying what to change and why. Nits are optional suggestions. Show the whole draft. Post nothing in this step."
+    },
+    "pr-post": {
+      "title": "Post the review",
+      "slash": "kata-pr-post",
+      "gate": "continue",
+      "instruction": "Post the review drafted in the previous step, as shown and approved, in one call: gh api repos/{owner}/{repo}/pulls/{n}/reviews with body (the summary), event (APPROVE, COMMENT or REQUEST_CHANGES from the verdict) and comments (path, line, side RIGHT, body for each finding). If the pull request is the user's own, GitHub refuses APPROVE and REQUEST_CHANGES: post it as COMMENT and say so. A comment whose line is not part of the diff goes into the summary instead. Print the review's URL. To draft without posting, run the mode with --skip pr-post."
     }
   },
   "modes": {
@@ -64,6 +88,18 @@
         "commit",
         "acceptance",
         "pr"
+      ]
+    },
+    "review-pr": {
+      "name": "PR review",
+      "slash": "kata-review-pr",
+      "description": "Review someone's pull request: read it, review every changed file, sort findings into major, minor and nits, approve when only nits remain, request changes on any major, and post the review after you confirm.",
+      "argsHint": "<PR number or URL>",
+      "steps": [
+        "pr-read",
+        "pr-review",
+        "pr-verdict",
+        "pr-post"
       ]
     }
   }

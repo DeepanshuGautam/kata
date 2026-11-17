@@ -3,13 +3,19 @@ export type KataStepStatus = 'pending' | 'running' | 'done' | 'skipped' | 'faile
 /** Countable work inside one step, such as issues fixed: drawn as `5/10 fixed` with a bar. */
 export type KataProgress = { done: number; total: number; label?: string }
 
+export type KataSeverity = 'high' | 'medium' | 'low' | 'major' | 'minor' | 'nit'
+
+/** A review's decision on a pull request. */
+export type KataVerdict = 'approve' | 'comment' | 'request changes'
+
 /** One finding a step recorded (a review issue, a failing test, a TODO) and what became of it. */
 export type KataIssue = {
   id: string
   title: string
   file?: string
   line?: number
-  severity?: 'high' | 'medium' | 'low'
+  /** high, medium, low; or the review scale: major (blocks a merge), minor, nit. */
+  severity?: KataSeverity
   status: 'open' | 'fixed' | 'skipped'
   /** The command id of the step that found it. */
   step?: string
@@ -44,6 +50,8 @@ export type KataState = {
   lastCommand?: KataLastCommand
   scope?: string
   issues?: KataIssue[]
+  /** Set by a review mode's verdict step. */
+  verdict?: KataVerdict
 }
 
 /** What the mod knows of the library: where it came from and what it offers as slash commands. */
