@@ -1,7 +1,7 @@
 ---
 name: kata
-description: Run a Kata mode (an ordered sequence of commands) or a single Kata command in this project, with live progress in the band, status line and pane. Use for /kata followed by a mode id and its arguments, /kata run followed by a command id, /kata modes, /kata commands, /kata examples, /kata status, /kata stop.
-argument-hint: "MODE [args] | run COMMAND [args] | modes | commands | examples | status | stop"
+description: Run a Kata mode (an ordered sequence of commands) or a single Kata command in this project, with live progress in the band, status line and pane. Use for /kata followed by a mode id and its arguments (with optional flags --dry-run, --from, --only, --skip, --no-confirm), /kata run followed by a command id, /kata modes, /kata commands, /kata examples, /kata status, /kata stop.
+argument-hint: "MODE [args] [--dry-run] [--from STEP] [--only STEPS] [--skip STEPS] [--no-confirm] | run COMMAND [args] | modes | commands | examples | status | stop"
 ---
 
 # Kata runner
@@ -43,14 +43,41 @@ When you resume a run and a step's `command` id is no longer in the library, loo
 - `run <command> [args]` → run that single command (section 4) with a one-step run whose `mode` is `run` and `modeName` is the command title.
 - `<mode> [args]` → run the whole mode. An unknown mode or command: list the available ids and stop.
 
-If `.kata/state.json` exists with `status` `running` or `paused`, ask the user in plain text whether to **resume** from its current step or **restart**, and wait. Never use a form or multiple-choice widget for this.
+Before running, take the flags out of the arguments (section 2a). What is left is the run's `args`.
+
+If `.kata/state.json` exists with `status` `running` or `paused`, ask the user in plain text whether to **resume** from its current step or **restart**, and wait. Never use a form or multiple-choice widget for this. Skip the question with `--dry-run` (it writes nothing) and with `--from` (it is a restart from that step; say so in one line).
+
+## 2a. Flags
+
+Flags may appear anywhere in the arguments, before or after the mode's own arguments. Take them out; quoted text is never a flag. A STEP is a step's command id or its 1-based number in the mode; STEPS is one STEP or several joined by commas (`--skip commit,pr`). A command id that appears more than once in the mode means every occurrence for `--only` and `--skip`, and the first for `--from`; use the number to pick one.
+
+- `--dry-run`: print the plan below and stop. Run no instruction, write no state file, ask nothing, change nothing.
+- `--from STEP`: start at that step. The steps before it are `skipped` with the note `before --from STEP`.
+- `--only STEPS`: run only those steps, in the mode's order. The others are `skipped` with the note `not in --only`.
+- `--skip STEPS`: run every step except those, which are `skipped` with the note `--skip`.
+- `--no-confirm`: treat `confirm` gates as `continue` for this run. `stop-on-fail` still stops, a question an instruction itself asks is still asked, and a step whose instruction says to wait for the user's yes still waits.
+
+`--only` cannot be combined with `--from` or `--skip`; `--from` and `--skip` can. A STEP that is not in the mode, an unknown flag, or a flag without its value: say which, list the mode's steps with their numbers and ids, and stop. With `/kata run COMMAND`, only `--dry-run` and `--no-confirm` apply; say so if others are given.
+
+Whenever any flag is given, print the plan before the first step, then go on (or stop, with `--dry-run`):
+
+```
+Kata ▸ <mode> · plan · <args>
+  1  read         Read the plan           continue    run
+  2  implement    Implement the scope     continue    skipped (before --from 3)
+  3  review       Full self-review        confirm → continue (--no-confirm)
+```
+
+One row per step: number, command id, title, gate (with the override `--no-confirm` makes), and `run` or `skipped (reason)`. End a dry run with one line saying nothing was run or written, and the command that runs it for real.
+
+Skipped steps are part of the run: write them into the state file as `skipped` with their note when the run starts, so the band and pane show them, and never run them. An instruction that sends you back to a skipped step (section 4's return loops) runs it this time, and you say so.
 
 ## 3. State file
 
 Path: `<project root>/.kata/state.json` (outside `.claude/`, which Claude Code guards as sensitive). Create the directory when missing, with a file `.kata/.gitignore` holding the single line `*`, so git ignores the folder without touching `.git` or the tracked `.gitignore`. Write the file with the Write tool so the mods pick up each change. Shape:
 
 ```json
-{ "version": 1, "mode": "pr", "modeName": "PR implementation", "args": "<args as typed>",
+{ "version": 1, "mode": "pr", "modeName": "PR implementation", "args": "<the arguments with the flags taken out>",
   "status": "running", "startedAt": "<ISO>", "updatedAt": "<ISO>", "current": 0,
   "steps": [ { "command": "read", "title": "Read the plan", "status": "pending" } ],
   "lastCommand": { "command": "read", "title": "Read the plan", "finishedAt": "<ISO>", "status": "done" },
@@ -71,7 +98,7 @@ Findings and progress, for any command:
 
 ## 4. Run the steps
 
-For each step, in order:
+For each step that is not skipped, in order:
 
 1. Print a header line: `Kata ▸ <mode> · step <i>/<N> · <title>`.
 2. Update the state file (running).
@@ -80,7 +107,7 @@ For each step, in order:
 5. Update the state file (ended, note, lastCommand).
 6. Apply the gate, taking a step's own `gate` override before the command's:
    - `continue` → next step.
-   - `confirm` → summarise the step in two or three lines, ask the user in plain text to continue, and set `status` to `paused` until they answer. On their go, set `running` and continue.
+   - `confirm` → summarise the step in two or three lines, ask the user in plain text to continue, and set `status` to `paused` until they answer. On their go, set `running` and continue. With `--no-confirm`, print the summary and continue without asking.
    - `stop-on-fail` → on `failed`, set the run `status` to `failed`, print the failure and the output that shows it, and stop. On `done`, continue.
 
 An instruction may send you back to an earlier step (for example acceptance → implement). Do that: set the earlier steps to `pending` again from that point, update `current`, and continue from there. Count a return loop; after three returns to the same step, stop and report.

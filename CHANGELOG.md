@@ -5,6 +5,7 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 ## [Unreleased]
 
 ### Added
+- Runner flags: `--dry-run` prints the plan and writes nothing; `--from`, `--only` and `--skip` choose the steps by command id or number; `--no-confirm` passes `confirm` gates. With any flag the plan is printed first, and skipped steps are recorded as skipped with the reason.
 - `mise run media` renders every README and website picture and video (`docs/media/`) from the current mod and Kata Library page: terminal stills, a GIF and a WebM of a `pr` run, page stills and a GIF tour. It replaces the hand-made snapshots in `docs/images/`.
 
 ### Fixed

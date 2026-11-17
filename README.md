@@ -163,6 +163,20 @@ Commands report progress in a generic way, so your own commands light up the sam
 | `/kata-panel` | Open the pane |
 | `/<slash>` | Any command or mode's own slash command |
 
+### Flags for a mode
+
+Add them anywhere after the mode, also after its slash command (`/kata-pr --dry-run`). A step is its command id or its number in the mode.
+
+| Flag | What it does |
+|---|---|
+| `--dry-run` | Print the plan (each step, its gate, run or skipped) and stop. Nothing runs, nothing is written. |
+| `--from STEP` | Start at that step; the ones before are marked skipped |
+| `--only STEP,STEP` | Run only those steps |
+| `--skip STEP,STEP` | Run all but those steps |
+| `--no-confirm` | Don't pause at `confirm` gates; `stop-on-fail` still stops |
+
+With any flag, Kata prints the plan before the first step. Skipped steps show as skipped in the band and the pane, with the reason. For example, `/kata pr "logging" --from review --skip pr` reviews, fixes, verifies and commits a change already written, without opening the pull request.
+
 ## What Kata runs, reads, writes and sends
 
 Kata has no server, collects nothing and sends no telemetry. The hooks module (`hooks/register.tsx`) is plain TypeScript, and so is everything else; nothing is compiled or minified.
