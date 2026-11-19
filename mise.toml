@@ -13,5 +13,5 @@ depends = ["media:install"]
 run = "node tools/media/build.mjs"
 
 [tasks."assets:export"]
-description = "Copy the media (docs/media, and the website's copies) into gautam-systems/kata/<version>_<date>/ on Google Drive"
+description = "Copy the media (docs/media, and the website's copies) into gautam-systems/kata/<version>/ on Google Drive, replacing that version's folder"
 run = "node tools/media/export.mjs"

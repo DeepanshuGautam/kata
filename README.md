@@ -232,5 +232,5 @@ MIT. Made by [Deepanshu Gautam](https://github.com/DeepanshuGautam).
 
 ## Updating the pictures
 
-Every image and video in this README and on the website comes from `mise run media`. It draws the band and pane through the mod itself (`hooks/media.test.tsx`), and the Kata Library page from `artifact/kata-library.html` with the steps library. It then writes `docs/media/`, replacing what was there. Run it after any change you can see in the band, the pane or the page, and commit `docs/media/` with that change. `mise run assets:export` then files a dated copy in the maintainer's Google Drive (`gautam-systems/kata/<version>_<date>/`, or `KATA_DRIVE_DIR`).
+Every image and video in this README and on the website comes from `mise run media`. It draws the band and pane through the mod itself (`hooks/media.test.tsx`), and the Kata Library page from `artifact/kata-library.html` with the steps library. It then writes `docs/media/`, replacing what was there. Run it after any change you can see in the band, the pane or the page, and commit `docs/media/` with that change. `mise run assets:export` then files a copy in the maintainer's Google Drive, one folder per version (`gautam-systems/kata/<version>/`, or `KATA_DRIVE_DIR`).
 

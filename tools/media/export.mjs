@@ -1,8 +1,8 @@
 // Copies Kata's media into the gautam-systems folder on Google Drive (synced by Google Drive for desktop), as
-//   gautam-systems/kata/<version>_<date>/readme/{images,animations}   docs/media: the stills and GIFs the README shows
-//   gautam-systems/kata/<version>_<date>/website/{images,videos}      what the website serves (img/apps/kata/)
-// with a README.md, and files named kata_<version>_<area>_<what>.<ext>. A folder for the same version and date is
-// replaced. Run `mise run media` first, and `mise run kata:media` in the website repository for its copies.
+//   gautam-systems/kata/<version>/readme/{images,animations}   docs/media: the stills and GIFs the README shows
+//   gautam-systems/kata/<version>/website/{images,videos}      what the website serves (img/apps/kata/)
+// with a README.md (dated), and files named kata_<version>_<area>_<what>.<ext>. One folder per version: exporting
+// the same version again replaces it, so it always holds that version's latest media. Run `mise run media` first, and `mise run kata:media` in the website repository for its copies.
 //   KATA_DRIVE_DIR  the destination folder (default: My Drive/gautam-systems/kata under ~/Library/CloudStorage)
 //   WEB_DIR         the website checkout (default: ../deepanshugautam-web); skipped when missing
 import { spawnSync } from 'node:child_process'
@@ -27,7 +27,7 @@ function driveDir() {
 }
 
 if (!existsSync(MEDIA) || !readdirSync(MEDIA).some((f) => f.endsWith('.png'))) throw new Error('docs/media is empty: run `mise run media` first')
-const out = join(driveDir(), `${version}_${date}`)
+const out = join(driveDir(), version)
 rmSync(out, { recursive: true, force: true })
 
 const copied = []
@@ -55,9 +55,9 @@ if (hasWeb) {
   }
 }
 
-writeFileSync(join(out, 'README.md'), `# Kata ${version}, ${date}
+writeFileSync(join(out, 'README.md'), `# Kata ${version}
 
-Media for the Kata plugin ${version}. They come from the plugin's own code and the Kata Library page, filled with the steps library, never from a real session.
+Media for the Kata plugin ${version}, exported ${date}. They come from the plugin's own code and the Kata Library page, filled with the steps library, never from a real session.
 
 | Folder | What | Made by |
 | --- | --- | --- |

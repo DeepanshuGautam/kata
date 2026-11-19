@@ -2,6 +2,7 @@
 //   terminal-0N-<moment>.png, terminal-run.gif/.webm   a terminal with the band and pane, at five moments of a run
 //   library-0N-<view>.png, library-tour.gif            the Kata Library page, five views
 // Every still is the same 1440×810 frame at 2x, so the README and the website can show them full width, side by side.
+// Pages are laid out at 1/ZOOM that size and shrunk to fit, so a whole page and the whole pane fit in the frame.
 // The band and pane come from the mod itself: hooks/media.test.tsx mounts them for each moment of a pull-request
 // run and prints what the mod drew; this script lays those trees out in a terminal window and screenshots it.
 // The page is the real artifact/kata-library.html with an in-memory store holding the steps library.
@@ -16,6 +17,9 @@ import { decodePng, encodeGif } from './codec.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const OUT = join(ROOT, 'docs', 'media')
+// The frame is 1440×810; pages are laid out at W×H CSS pixels and drawn at ZOOM, like a browser zoomed to 60%.
+const ZOOM = 0.6
+const W = Math.round(1440 / ZOOM), H = Math.round(810 / ZOOM)
 
 // ----- 1. What the mod draws ----------------------------------------------------------------------
 
@@ -106,10 +110,10 @@ function terminalPage(frame) {
 :root { --lh: 1.42em; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #111214; font: 13px/1.42 "SF Mono", Menlo, Monaco, monospace; color: ${THEME.text}; }
-.window { width: 1440px; margin: 0; border-radius: 10px; overflow: hidden; background: #1c1c1e; border: 1px solid #333; }
+.window { width: ${W}px; margin: 0; border-radius: 10px; overflow: hidden; background: #1c1c1e; border: 1px solid #333; }
 .titlebar { height: 30px; background: #2a2a2c; display: flex; align-items: center; padding: 0 12px; gap: 8px; color: #9a9a9a; font: 12px -apple-system, "Segoe UI", sans-serif; }
 .dot { width: 12px; height: 12px; border-radius: 50%; } .titlebar .title { flex: 1; text-align: center; margin-right: 52px; }
-.body { display: flex; height: 778px; }
+.body { display: flex; height: ${H - 32}px; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 10px 14px 8px; }
 .transcript { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; white-space: pre; }
 .line.say { color: ${THEME.text}; } .line.you { color: ${THEME.inactive}; } .line.ok { color: ${THEME.success}; } .line.dim { color: ${THEME.inactive}; }
@@ -117,14 +121,14 @@ body { margin: 0; background: #111214; font: 13px/1.42 "SF Mono", Menlo, Monaco,
 .rule { border-top: 1px solid #3a3a3a; margin: 6px 0; }
 .prompt { color: ${THEME.text}; } .cursor { display: inline-block; width: 0.6em; height: 1.1em; background: #d0d0d0; vertical-align: text-bottom; }
 .status { white-space: pre; margin-top: 2px; }
-.pane { width: 540px; border-left: 1px solid #3a3a3a; background: #232325; padding: 10px 14px; white-space: pre; overflow: hidden; }
+.pane { width: 640px; border-left: 1px solid #3a3a3a; background: #232325; padding: 10px 14px; white-space: pre; overflow: hidden; }
 .pane .head { display: flex; justify-content: space-between; color: ${THEME.inactive}; margin-bottom: 8px; }
 .box { display: flex; min-width: 0; } .box.row { flex-direction: row; align-items: baseline; flex-wrap: nowrap; } .box.col { flex-direction: column; }
 .t { white-space: pre; }
 .pane .t { white-space: pre-wrap; overflow-wrap: anywhere; }
 .btn { color: ${THEME.text}; border: 1px solid #555; border-radius: 3px; padding: 0 0.5ch; margin-right: 1ch; } .btn.plain { border: 0; padding: 0; color: ${THEME.inactive}; }
 </style></head><body><div class="window">
-<div class="titlebar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="title">my-app — claude — 140×40</span></div>
+<div class="titlebar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="title">my-app — claude — 230×66</span></div>
 <div class="body"><div class="main">
   <div class="transcript"><div class="line you">❯ /kata pr add a farewell function with a test</div><div class="line">&nbsp;</div>${lines}</div>
   ${band}
@@ -183,14 +187,14 @@ async function shoot() {
   const save = (name, buf) => { writeFileSync(join(OUT, name), buf); written.push(name) }
 
   // Terminal: stills at 2x, the run as a GIF at 1x.
-  const sharp = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 2 })
+  const sharp = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 2 * ZOOM })
   for (const [file, name] of TERMINAL_STILLS) {
     await sharp.setContent(terminalPage(frames.get(name)))
     save(file, await sharp.locator('.window').screenshot())
   }
   await sharp.close()
 
-  const flat = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 1 })
+  const flat = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: ZOOM })
   const order = ['read', 'implement', 'review', 'fix-0', 'fix-2', 'fix-4', 'verify', 'pr', 'done']
   const gifFrames = []
   for (const name of order) {
@@ -209,7 +213,7 @@ async function shoot() {
   else {
     const tmp = join(ROOT, '.media-tmp')
     rmSync(tmp, { recursive: true, force: true })
-    const ctx = await browser.newContext({ viewport: { width: 1440, height: 810 }, recordVideo: { dir: tmp, size: { width: 1440, height: 810 } } })
+    const ctx = await browser.newContext({ viewport: { width: W, height: H }, recordVideo: { dir: tmp, size: { width: 1440, height: 810 } } })
     const rec = await ctx.newPage()
     for (const [i, f] of gifFrames.entries()) {
       await rec.setContent(terminalPage(frames.get(order.filter((n) => frames.has(n))[i])))
@@ -230,14 +234,14 @@ async function shoot() {
     ['library-05-about.png', '#btn-about'],
   ]
   for (const [scale, gif] of [[2, false], [1, true]]) {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: scale, colorScheme: 'dark' })
+    const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: scale * ZOOM, colorScheme: 'dark' })
     await page.setContent(libraryPage(), { waitUntil: 'networkidle' })
     await page.waitForSelector('[data-kind="mode"][data-id="pr"]')
     const tour = []
     for (const [file, selector] of views) {
       if (file === 'library-04-steps.png') await page.click('[data-act="cancel"]').catch(() => {})
       await page.click(selector)
-      await page.mouse.move(1270, 750)
+      await page.mouse.move(W - 170, H - 60)
       await page.waitForTimeout(250)
       const shot = await page.screenshot()
       if (gif) tour.push({ ...decodePng(shot), delayMs: 2200 })

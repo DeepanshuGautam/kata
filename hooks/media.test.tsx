@@ -18,7 +18,7 @@ const PANE = {
   plugin: 'kata',
   component: 'Pane',
   requestId: 'kata',
-  props: { title: 'Kata', isFocused: false, bodyColumns: 58, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} },
+  props: { title: 'Kata', isFocused: false, bodyColumns: 78, placement: 'dock', scroll: { offset: 0, bodyRows: 66 }, view: {} },
 } as const
 
 const STEPS: [string, string][] = [
