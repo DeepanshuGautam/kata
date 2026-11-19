@@ -1,9 +1,8 @@
 name: CI
 
+# Runs only when started by hand (Actions minutes are not available for every push).
+# The same checks run locally with `mise run ci`; run it before merging or releasing.
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:

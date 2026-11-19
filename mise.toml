@@ -15,3 +15,13 @@ run = "node tools/media/build.mjs"
 [tasks."assets:export"]
 description = "Copy the media (docs/media, and the website's copies) into gautam-systems/kata/<version>/ on Google Drive, replacing that version's folder"
 run = "node tools/media/export.mjs"
+
+[tasks.ci]
+description = "The CI checks, run locally (GitHub Actions runs them only when started by hand): validate, library schema, embedded Steps library, tests"
+run = [
+  "claude plugin validate . --strict",
+  "npx --yes -p ajv-cli@5.0.0 -p ajv-formats@3.0.1 ajv validate --spec=draft2020 -c ajv-formats -s schemas/library.schema.json -d library/default.json",
+  "npx --yes -p ajv-cli@5.0.0 -p ajv-formats@3.0.1 ajv validate --spec=draft2020 -c ajv-formats -s schemas/library.schema.json -d library/examples.json",
+  "node scripts/embed-examples.mjs --check",
+  "claude plugin test .",
+]

@@ -18,6 +18,7 @@ The design and task list are in the Obsidian vault GautamSystems: area **Kata**,
 ## Rules
 
 - Load the `plugin-authoring` skill before touching `hooks/register.tsx` or `types/`; the engine API is in the types it lays down, not in memory. `refresh` and any function that receives `$` must be a top-level function declaration.
+- `mise run ci` runs the CI checks locally (validate, library schema, embedded Steps library, tests) and must pass before a merge or a release; the GitHub workflow runs only when started by hand.
 - `claude plugin validate .` must pass before a commit. Type-check with `tsc -p .` once `.claude-plugin/types/` exists (the engine writes it when the plugin loads).
 - Tests are `hooks/*.test.tsx`, run with `claude plugin test .`.
 - Skill text is written for Claude in the second person, one procedure per section, plain text questions to the user (never AskUserQuestion), state file updates at every step boundary.
