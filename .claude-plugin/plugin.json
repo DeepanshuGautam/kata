@@ -1,7 +1,7 @@
 {
   "name": "kata",
   "displayName": "Kata",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Practised sequences for Claude Code: define your own commands, chain them into modes, run a whole mode or a single step from the terminal with its own slash command, and watch the run live: current step, issues found and fixed, branch and progress.",
   "author": {
     "name": "Deepanshu Gautam",

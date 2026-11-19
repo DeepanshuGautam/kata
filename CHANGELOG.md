@@ -4,11 +4,18 @@ All notable changes to Kata are recorded here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-19
+
 ### Added
 - The `review-pr` example mode in the steps library: read a pull request, review every changed file, sort findings into major, minor and nits, decide the verdict (request changes on any major, comment on minors, approve on nits only) and post the review with inline comments after a confirm gate.
 - Review severities `major`, `minor` and `nit`, and a run `verdict`: the band and pane count findings by severity until one is fixed, and show the verdict; the end-of-run toast carries both.
 - Runner flags: `--dry-run` prints the plan and writes nothing; `--from`, `--only` and `--skip` choose the steps by command id or number; `--no-confirm` passes `confirm` gates. With any flag the plan is printed first, and skipped steps are recorded as skipped with the reason.
 - `mise run media` renders every README and website picture and video (`docs/media/`) from the current mod and Kata Library page: terminal stills, a GIF and a WebM of a `pr` run, page stills and a GIF tour. It replaces the hand-made snapshots in `docs/images/`.
+- `mise run assets:export` files the media in Google Drive, one folder per version, and starts Google Drive for desktop when it is not running.
+- `mise run ci` runs the CI checks locally. The GitHub workflow now runs only when started by hand.
+
+### Changed
+- The media are drawn at 60%, so the whole Kata Library page and the whole pane fit in each frame.
 
 ### Fixed
 - `/kata-edit` names every reserved slash name, pins deletes to the version read, and when the page refuses a stale write it re-reads, shows what changed and asks before applying on top.
@@ -52,6 +59,7 @@ First public release.
 - README snapshots of the band and the pane (`docs/images/`).
 - Plugin tests for the guard, band, status line, toasts, notifications, pane, library sync and slash commands; plugin icon; CI workflow.
 
-[Unreleased]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.1.1...HEAD
+[Unreleased]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.2.0...HEAD
+[0.2.0]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.1.1...kata--v0.2.0
 [0.1.1]: https://github.com/DeepanshuGautam/kata/compare/kata--v0.1.0...kata--v0.1.1
 [0.1.0]: https://github.com/DeepanshuGautam/kata/releases/tag/kata--v0.1.0
